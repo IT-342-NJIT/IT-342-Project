@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- index.html -->
+<!-- index.html - LOGIN PAGE (FIXED) -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -135,6 +135,12 @@
             transform: translateY(0);
         }
 
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .divider {
             display: flex;
             align-items: center;
@@ -188,6 +194,12 @@
             background: #efe;
             color: #0a0;
             border: 1px solid #cfc;
+        }
+
+        .alert.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
         }
     </style>
 </head>
@@ -246,10 +258,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
 <script>
-    // CONFIGURATION - Replace with your actual Cognito values
+    // CONFIGURATION
     const COGNITO_CONFIG = {
-        UserPoolId: 'us-east-1_lheuY4PU5',  // REPLACE WITH YOUR ACTUAL ID
-        ClientId: '4hr8cktcge2tagvv46o13o3fsn',  // REPLACE WITH YOUR ACTUAL ID
+        UserPoolId: 'us-east-1_lheuY4PU5',
+        ClientId: '4hr8cktcge2tagvv46o13o3fsn',
         Region: 'us-east-1'
     };
 
@@ -269,6 +281,7 @@
         const password = document.getElementById('password').value;
         const rememberMe = document.getElementById('remember').checked;
         const alert = document.getElementById('alert');
+        const loginBtn = document.querySelector('.login-btn');
         
         // Initialize Cognito User Pool
         const poolData = {
@@ -292,6 +305,8 @@
         const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
         
         // Show loading
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Signing in...';
         alert.className = 'alert info';
         alert.textContent = 'Authenticating...';
         alert.style.display = 'block';
@@ -299,35 +314,75 @@
         // Authenticate user
         cognitoUser.authenticateUser(authenticationDetails, {
             onSuccess: function(result) {
+                // Get tokens
                 const idToken = result.getIdToken().getJwtToken();
+                const accessToken = result.getAccessToken().getJwtToken();
+                const refreshToken = result.getRefreshToken().getToken();
                 
-                // Store tokens
+                console.log('✅ Login successful!');
+                console.log('ID Token:', idToken.substring(0, 50) + '...');
+                
+                // Store tokens securely
                 if (rememberMe) {
+                    // Long-term storage (30 days)
                     localStorage.setItem('authToken', idToken);
+                    localStorage.setItem('accessToken', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
                     localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
                     localStorage.setItem('rememberMe', username);
+                    localStorage.setItem('username', username);
                 } else {
+                    // Session only
                     sessionStorage.setItem('authToken', idToken);
+                    sessionStorage.setItem('accessToken', accessToken);
+                    sessionStorage.setItem('refreshToken', refreshToken);
+                    sessionStorage.setItem('username', username);
                     localStorage.removeItem('rememberMe');
                 }
                 
                 alert.className = 'alert success';
-                alert.textContent = 'Login successful!';
+                alert.textContent = '✅ Login successful! Redirecting...';
                 alert.style.display = 'block';
                 
+                // FIXED: Redirect to home.html (not search.html)
                 setTimeout(() => {
-                    window.location.href = 'search.html';
+                    window.location.href = 'home.html';
                 }, 1000);
             },
             
             onFailure: function(err) {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+                
                 alert.className = 'alert error';
-                alert.textContent = err.message || 'Authentication failed';
+                
+                // User-friendly error messages
+                if (err.code === 'UserNotConfirmedException') {
+                    alert.textContent = 'Please verify your email first. Check your inbox for the verification code.';
+                    
+                    // Offer to resend verification
+                    setTimeout(() => {
+                        if (confirm('Would you like to go to the verification page?')) {
+                            sessionStorage.setItem('pendingUsername', username);
+                            window.location.href = 'verify.html?username=' + encodeURIComponent(username);
+                        }
+                    }, 2000);
+                } else if (err.code === 'NotAuthorizedException') {
+                    alert.textContent = 'Incorrect username or password';
+                } else if (err.code === 'UserNotFoundException') {
+                    alert.textContent = 'User not found. Please check your username or sign up.';
+                } else {
+                    alert.textContent = err.message || 'Authentication failed';
+                }
+                
                 alert.style.display = 'block';
                 console.error('Login error:', err);
             },
             
             mfaRequired: function(codeDeliveryDetails) {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+                
                 alert.className = 'alert info';
                 alert.textContent = '2FA code sent to ' + codeDeliveryDetails.DeliveryMedium;
                 alert.style.display = 'block';
@@ -335,71 +390,50 @@
                 const verificationCode = prompt('Enter the 2FA code sent to ' + codeDeliveryDetails.Destination);
                 
                 if (verificationCode) {
+                    loginBtn.disabled = true;
+                    loginBtn.textContent = 'Verifying...';
+                    
                     cognitoUser.sendMFACode(verificationCode, {
                         onSuccess: function(result) {
                             const idToken = result.getIdToken().getJwtToken();
+                            const accessToken = result.getAccessToken().getJwtToken();
+                            const refreshToken = result.getRefreshToken().getToken();
                             
                             if (rememberMe) {
                                 localStorage.setItem('authToken', idToken);
+                                localStorage.setItem('accessToken', accessToken);
+                                localStorage.setItem('refreshToken', refreshToken);
                                 localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
                                 localStorage.setItem('rememberMe', username);
+                                localStorage.setItem('username', username);
                             } else {
                                 sessionStorage.setItem('authToken', idToken);
+                                sessionStorage.setItem('accessToken', accessToken);
+                                sessionStorage.setItem('refreshToken', refreshToken);
+                                sessionStorage.setItem('username', username);
                             }
                             
                             alert.className = 'alert success';
                             alert.textContent = 'Login successful!';
                             
                             setTimeout(() => {
-                                window.location.href = 'search.html';
+                                window.location.href = 'home.html';
                             }, 1000);
                         },
                         onFailure: function(err) {
+                            loginBtn.disabled = false;
+                            loginBtn.textContent = 'Sign In';
+                            
                             alert.className = 'alert error';
                             alert.textContent = 'Invalid 2FA code';
                             alert.style.display = 'block';
                         }
                     });
+                } else {
+                    alert.className = 'alert error';
+                    alert.textContent = '2FA verification cancelled';
+                    alert.style.display = 'block';
                 }
-            },
-            
-            mfaSetup: function(challengeName, challengeParameters) {
-                alert.className = 'alert info';
-                alert.textContent = 'Setting up 2FA for first time...';
-                alert.style.display = 'block';
-                
-                cognitoUser.associateSoftwareToken({
-                    associateSecretCode: function(secretCode) {
-                        const qrCodeUrl = 'otpauth://totp/TireShop:' + username + '?secret=' + secretCode + '&issuer=TireShop';
-                        alert.className = 'alert info';
-                        alert.innerHTML = 'Scan this QR code with your authenticator app:<br><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCodeUrl) + '"><br>Or enter this code manually: ' + secretCode;
-                        
-                        const totpCode = prompt('Enter the code from your authenticator app:');
-                        
-                        if (totpCode) {
-                            cognitoUser.verifySoftwareToken(totpCode, 'My Authenticator', {
-                                onSuccess: function(result) {
-                                    alert.className = 'alert success';
-                                    alert.textContent = '2FA setup complete! Please login again.';
-                                    
-                                    setTimeout(() => {
-                                        location.reload();
-                                    }, 2000);
-                                },
-                                onFailure: function(err) {
-                                    alert.className = 'alert error';
-                                    alert.textContent = 'Invalid code. Please try again.';
-                                    alert.style.display = 'block';
-                                }
-                            });
-                        }
-                    },
-                    onFailure: function(err) {
-                        alert.className = 'alert error';
-                        alert.textContent = err.message;
-                        alert.style.display = 'block';
-                    }
-                });
             }
         });
     });

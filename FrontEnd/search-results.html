@@ -4,11 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tire Search Results - Tire Shop</title>
+    <script src="auth-check.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+                body {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        body.authorized {
+            opacity: 1;
         }
 
         body {

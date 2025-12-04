@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- home.html -->
+<!-- home.html - PROTECTED PAGE (with JWT validation) -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,6 +16,11 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             min-height: 100vh;
+            display: none; /* Hide until auth check passes */
+        }
+
+        body.authorized {
+            display: block; /* Show after auth check */
         }
 
         /* Navigation Bar */
@@ -56,6 +61,21 @@
 
         .navbar-menu a:hover {
             color: #dc2626;
+        }
+
+                body {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        body.authorized {
+            opacity: 1;
+        }
+
+        .user-welcome {
+            color: #666;
+            font-size: 14px;
+            margin-right: 10px;
         }
 
         .logout-btn {
@@ -312,13 +332,13 @@
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="index.html" class="navbar-brand">
+        <a href="home.html" class="navbar-brand">
             <span>🚗</span>
             <span>Tire Shop</span>
         </a>
         <div class="navbar-menu">
-            <a href="index.html">Home</a>
-            <a href="search.html">Find Tires</a>
+            <span class="user-welcome">Welcome, <span id="usernameDisplay">User</span>!</span>
+            <a href="home.html">Home</a>
             <a href="#">My Vehicles</a>
             <a href="#">Tutorial</a>
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -390,8 +410,78 @@
     </div>
 
     <script>
-        // MILESTONE 1: Populate dropdowns with sample data
-        // MILESTONE 2+: This will connect to Wheel-Size API
+        // ========================================
+        // STEP 1: CHECK AUTHENTICATION (RUNS FIRST)
+        // ========================================
+        (function checkAuth() {
+            console.log('🔐 Checking authentication...');
+            
+            // Try to get token from localStorage or sessionStorage
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+            
+            if (!token) {
+                console.log('❌ No auth token found - redirecting to login');
+                alert('Please log in to access this page');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Check token expiration (if stored)
+            const expiry = localStorage.getItem('tokenExpiry');
+            if (expiry && Date.now() > parseInt(expiry)) {
+                console.log('❌ Token expired - redirecting to login');
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('Your session has expired. Please log in again.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Decode JWT token (basic check - not validating signature)
+            try {
+                const tokenParts = token.split('.');
+                if (tokenParts.length !== 3) {
+                    throw new Error('Invalid token format');
+                }
+                
+                const payload = JSON.parse(atob(tokenParts[1]));
+                console.log('✅ Token payload:', payload);
+                
+                // Check if token is expired
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    console.log('❌ Token expired - redirecting to login');
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    alert('Your session has expired. Please log in again.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                // Token is valid - show page
+                console.log('✅ Authentication successful!');
+                document.body.classList.add('authorized');
+                
+                // Display username
+                if (username) {
+                    document.getElementById('usernameDisplay').textContent = username;
+                } else if (payload['cognito:username']) {
+                    document.getElementById('usernameDisplay').textContent = payload['cognito:username'];
+                }
+                
+            } catch (error) {
+                console.error('❌ Error decoding token:', error);
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('Invalid session. Please log in again.');
+                window.location.href = 'index.html';
+                return;
+            }
+        })();
+        
+        // ========================================
+        // STEP 2: POPULATE FORM (AFTER AUTH CHECK)
+        // ========================================
         
         // Populate Year dropdown (last 30 years)
         const yearSelect = document.getElementById('year');
@@ -501,23 +591,17 @@
                 alert.className = 'alert success';
                 alert.textContent = `Found tires for ${year} ${make} ${model}! (API not connected yet)`;
                 alert.style.display = 'block';
-                
-                // MILESTONE 2+: Will redirect to results page
-                setTimeout(() => {
-                    alert.className = 'alert info';
-                    alert.textContent = 'Redirecting to results page...';
-                    // window.location.href = `results.html?year=${year}&make=${make}&model=${model}`;
-                }, 1500);
             }, 2000);
 
-            /* MILESTONE 2+ CODE (uncomment when backend is ready):
+            /* MILESTONE 3+ CODE (uncomment when backend API is ready):
             
-            // Call your backend API
-            fetch('/api/search-tires', {
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            
+            fetch('https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod/search-tires', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    'Authorization': 'Bearer ' + token
                 },
                 body: JSON.stringify({ year, make, model })
             })
@@ -547,16 +631,29 @@
             */
         });
 
-        // Logout function
+        // ========================================
+        // LOGOUT FUNCTION
+        // ========================================
         function logout() {
-            // MILESTONE 1: Simple redirect
-            alert('Logging out... (not connected yet)');
-            // window.location.href = 'login.html';
+            console.log('🔓 Logging out...');
             
-            /* MILESTONE 2+ CODE:
-            localStorage.removeItem('token');
-            window.location.href = 'login.html';
-            */
+            // Clear all stored tokens
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('tokenExpiry');
+            localStorage.removeItem('username');
+            
+            sessionStorage.removeItem('authToken');
+            sessionStorage.removeItem('accessToken');
+            sessionStorage.removeItem('refreshToken');
+            sessionStorage.removeItem('username');
+            
+            // Keep rememberMe username if it was checked
+            // (But remove tokens for security)
+            
+            alert('Logged out successfully');
+            window.location.href = 'index.html';
         }
     </script>
 </body>
