@@ -719,4 +719,18 @@
             // window.location.href = 'index.html';
         }
       </script>
+      <script src="logger.js"></script>
+<script>
+  const form = document.querySelector('form');
+
+  if (form) {
+    form.addEventListener('submit', () => {
+      const input = form.querySelector('input');
+      const query = input ? input.value : '';
+      logEvent('tire_search', { query });
+    });
+  }
+</script>
+
+      <script src="logger.js"></script>
 </body>

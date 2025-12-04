@@ -1,0 +1,14 @@
+<h1>User Activity Log</h1>
+<button onclick="loadLogs()">Refresh Logs</button>
+<pre id="logs"></pre>
+
+<script>
+const LOG_API_BASE = 'http://EC2_PUBLIC_IP:3000';
+
+async function loadLogs() {
+  const res = await fetch(`${LOG_API_BASE}/api/logs`);
+  const data = await res.json();
+  document.getElementById('logs').textContent =
+    JSON.stringify(data, null, 2);
+}
+</script>
