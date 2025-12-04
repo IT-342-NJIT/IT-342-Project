@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+<!-- index.html -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tire Shop - Find Your Tires</title>
+    <title>Tire Shop - Login</title>
     <style>
         * {
             margin: 0;
@@ -15,548 +16,393 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
-        /* Navigation Bar */
-        .navbar {
+        .login-container {
             background: #ffffff;
-            padding: 16px 40px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
         }
 
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #1a1a1a;
-            text-decoration: none;
-        }
-
-        .navbar-brand span {
-            margin-left: 10px;
-        }
-
-        .navbar-menu {
-            display: flex;
-            gap: 30px;
-            align-items: center;
-        }
-
-        .navbar-menu a {
-            color: #333;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        .navbar-menu a:hover {
-            color: #dc2626;
-        }
-
-        .logout-btn {
-            background: #dc2626;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: #b91c1c;
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
-
-        /* Hero Section */
-        .hero {
+        .logo-section {
             text-align: center;
-            color: white;
-            margin-bottom: 50px;
+            margin-bottom: 30px;
         }
 
-        .hero h1 {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .hero p {
-            font-size: 20px;
-            color: #ccc;
-        }
-
-        /* Search Card */
-        .search-card {
-            background: white;
-            border-radius: 16px;
-            padding: 50px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .search-card h2 {
+        .logo-section h1 {
             color: #1a1a1a;
-            font-size: 28px;
-            margin-bottom: 12px;
-            text-align: center;
+            font-size: 32px;
+            margin-bottom: 8px;
         }
 
-        .search-card .subtitle {
+        .logo-section .tagline {
             color: #666;
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 16px;
+            font-size: 14px;
+        }
+
+        .logo-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
         }
 
         .form-group {
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
 
         .form-group label {
             display: block;
             color: #333;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
-        .form-group select,
         .form-group input {
             width: 100%;
-            padding: 16px;
+            padding: 14px 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 15px;
             transition: all 0.3s ease;
             background: #f8f8f8;
-            appearance: none;
-            cursor: pointer;
         }
 
-        .form-group select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            padding-right: 40px;
-        }
-
-        .form-group select:focus,
         .form-group input:focus {
             outline: none;
             border-color: #dc2626;
             background: #ffffff;
         }
 
-        .form-group select:disabled {
-            background: #f0f0f0;
-            cursor: not-allowed;
-            color: #999;
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            font-size: 14px;
         }
 
-        .search-btn {
+        .remember-me {
+            display: flex;
+            align-items: center;
+            color: #666;
+        }
+
+        .remember-me input {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            color: #dc2626;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+        .login-btn {
             width: 100%;
-            padding: 18px;
+            padding: 14px;
             background: #dc2626;
             color: white;
             border: none;
-            border-radius: 10px;
-            font-size: 18px;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
-            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
         }
 
-        .search-btn:hover {
+        .login-btn:hover {
             background: #b91c1c;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
         }
 
-        .search-btn:active {
+        .login-btn:active {
             transform: translateY(0);
         }
 
-        .search-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            color: #999;
+            font-size: 14px;
         }
 
-        /* Info Cards */
-        .info-section {
-            margin-top: 60px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        .info-card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
+        .divider span {
+            padding: 0 16px;
+        }
+
+        .signup-section {
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s;
-        }
-
-        .info-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .info-card .icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
-
-        .info-card h3 {
-            color: #1a1a1a;
-            font-size: 20px;
-            margin-bottom: 12px;
-        }
-
-        .info-card p {
             color: #666;
             font-size: 14px;
-            line-height: 1.6;
+        }
+
+        .signup-section a {
+            color: #dc2626;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .signup-section a:hover {
+            text-decoration: underline;
         }
 
         .alert {
-            padding: 14px 20px;
-            border-radius: 10px;
+            padding: 12px;
+            border-radius: 8px;
             margin-bottom: 20px;
             display: none;
-            font-size: 15px;
-            text-align: center;
+            font-size: 14px;
         }
 
         .alert.error {
             background: #fee;
             color: #c00;
-            border: 2px solid #fcc;
+            border: 1px solid #fcc;
         }
 
         .alert.success {
             background: #efe;
             color: #0a0;
-            border: 2px solid #cfc;
-        }
-
-        .alert.info {
-            background: #e3f2fd;
-            color: #1976d2;
-            border: 2px solid #bbdefb;
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #fff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .search-btn.loading .btn-text {
-            display: none;
-        }
-
-        .search-btn.loading .spinner {
-            display: block;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
-                gap: 16px;
-                padding: 16px 20px;
-            }
-
-            .hero h1 {
-                font-size: 36px;
-            }
-
-            .search-card {
-                padding: 30px 20px;
-            }
-
-            .info-section {
-                grid-template-columns: 1fr;
-            }
+            border: 1px solid #cfc;
         }
     </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <a href="index.html" class="navbar-brand">
-            <span>🚗</span>
-            <span>Tire Shop</span>
-        </a>
-        <div class="navbar-menu">
-            <a href="index.html">Home</a>
-            <a href="search.html">Find Tires</a>
-            <a href="#">My Vehicles</a>
-            <a href="#">Tutorial</a>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Hero Section -->
-        <div class="hero">
-            <h1>Find Your Perfect Tires</h1>
-            <p>Enter your vehicle information to get started</p>
+    <div class="login-container">
+        <div class="logo-section">
+            <div class="logo-icon">🚗</div>
+            <h1>Tire Match</h1>
+            <p class="tagline">Find the perfect tires for your vehicle</p>
         </div>
 
-        <!-- Search Card -->
-        <div class="search-card">
-            <h2>Vehicle Information</h2>
-            <p class="subtitle">Tell us about your car and we'll find the right tires</p>
+        <div id="alert" class="alert"></div>
 
-            <div id="alert" class="alert"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    name="username" 
+                    placeholder="Enter your username"
+                    required
+                >
+            </div>
 
-            <form id="vehicleForm">
-                <div class="form-group">
-                    <label for="year">Year</label>
-                    <select id="year" name="year" required>
-                        <option value="">Select Year</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
 
-                <div class="form-group">
-                    <label for="make">Make</label>
-                    <select id="make" name="make" required disabled>
-                        <option value="">Select Year First</option>
-                    </select>
-                </div>
+            <div class="remember-forgot">
+                <label class="remember-me">
+                    <input type="checkbox" id="remember">
+                    <span>Remember me</span>
+                </label>
+                <a href="#" class="forgot-password">Forgot Password?</a>
+            </div>
 
-                <div class="form-group">
-                    <label for="model">Model</label>
-                    <select id="model" name="model" required disabled>
-                        <option value="">Select Make First</option>
-                    </select>
-                </div>
+            <button type="submit" class="login-btn">Sign In</button>
+        </form>
 
-                <button type="submit" class="search-btn" id="searchBtn">
-                    <span class="btn-text">Search for Tires</span>
-                    <div class="spinner"></div>
-                </button>
-            </form>
+        <div class="divider">
+            <span>or</span>
         </div>
 
-        <!-- Info Section -->
-        <div class="info-section">
-            <div class="info-card">
-                <div class="icon">🔍</div>
-                <h3>Easy Search</h3>
-                <p>Simply enter your vehicle information and we'll find compatible tires from major manufacturers</p>
-            </div>
-            <div class="info-card">
-                <div class="icon">📊</div>
-                <h3>Detailed Info</h3>
-                <p>Get specifications like PSI, tire ply, size, and links to manufacturer websites</p>
-            </div>
-            <div class="info-card">
-                <div class="icon">💾</div>
-                <h3>Save History</h3>
-                <p>Your search history and vehicles are automatically saved for quick access</p>
-            </div>
+        <div class="signup-section">
+            Don't have an account? <a href="signup.html">Sign Up</a>
         </div>
     </div>
 
-    <script>
-        // MILESTONE 1: Populate dropdowns with sample data
-        // MILESTONE 2+: This will connect to Wheel-Size API
-        
-        // Populate Year dropdown (last 30 years)
-        const yearSelect = document.getElementById('year');
-        const currentYear = new Date().getFullYear();
-        for (let year = currentYear; year >= currentYear - 30; year--) {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            yearSelect.appendChild(option);
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+<script>
+    // CONFIGURATION - Replace with your actual Cognito values
+    const COGNITO_CONFIG = {
+        UserPoolId: 'us-east-1_lheuY4PU5',  // REPLACE WITH YOUR ACTUAL ID
+        ClientId: '4hr8cktcge2tagvv46o13o3fsn',  // REPLACE WITH YOUR ACTUAL ID
+        Region: 'us-east-1'
+    };
+
+    // Check if username was saved (Remember Me)
+    window.addEventListener('DOMContentLoaded', function() {
+        const savedUsername = localStorage.getItem('rememberMe');
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+            document.getElementById('remember').checked = true;
         }
+    });
 
-        // Sample data for Milestone 1
-        const sampleMakes = {
-            '2024': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
-            '2023': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
-            '2022': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz'],
-            '2021': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW'],
-            '2020': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'Hyundai']
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const rememberMe = document.getElementById('remember').checked;
+        const alert = document.getElementById('alert');
+        
+        // Initialize Cognito User Pool
+        const poolData = {
+            UserPoolId: COGNITO_CONFIG.UserPoolId,
+            ClientId: COGNITO_CONFIG.ClientId
         };
-
-        const sampleModels = {
-            'Toyota': ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Tacoma', '4Runner'],
-            'Honda': ['Accord', 'Civic', 'CR-V', 'Pilot', 'Odyssey'],
-            'Ford': ['F-150', 'Mustang', 'Explorer', 'Escape', 'Edge'],
-            'Chevrolet': ['Silverado', 'Equinox', 'Malibu', 'Tahoe', 'Camaro'],
-            'BMW': ['3 Series', '5 Series', 'X3', 'X5', 'M3'],
-            'Mercedes-Benz': ['C-Class', 'E-Class', 'GLE', 'GLC', 'S-Class'],
-            'Tesla': ['Model 3', 'Model Y', 'Model S', 'Model X'],
-            'Nissan': ['Altima', 'Rogue', 'Sentra', 'Pathfinder'],
-            'Hyundai': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe']
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+        
+        // Create authentication details
+        const authenticationData = {
+            Username: username,
+            Password: password,
         };
-
-        // Year selection handler
-        yearSelect.addEventListener('change', function() {
-            const makeSelect = document.getElementById('make');
-            const modelSelect = document.getElementById('model');
-            
-            makeSelect.innerHTML = '<option value="">Select Make</option>';
-            modelSelect.innerHTML = '<option value="">Select Make First</option>';
-            modelSelect.disabled = true;
-            
-            if (this.value) {
-                makeSelect.disabled = false;
-                const makes = sampleMakes[this.value] || sampleMakes['2020'];
+        const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+        
+        // Create cognito user
+        const userData = {
+            Username: username,
+            Pool: userPool,
+        };
+        const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+        
+        // Show loading
+        alert.className = 'alert info';
+        alert.textContent = 'Authenticating...';
+        alert.style.display = 'block';
+        
+        // Authenticate user
+        cognitoUser.authenticateUser(authenticationDetails, {
+            onSuccess: function(result) {
+                const idToken = result.getIdToken().getJwtToken();
                 
-                makes.forEach(make => {
-                    const option = document.createElement('option');
-                    option.value = make;
-                    option.textContent = make;
-                    makeSelect.appendChild(option);
-                });
-            } else {
-                makeSelect.disabled = true;
-            }
-        });
-
-        // Make selection handler
-        document.getElementById('make').addEventListener('change', function() {
-            const modelSelect = document.getElementById('model');
-            
-            modelSelect.innerHTML = '<option value="">Select Model</option>';
-            
-            if (this.value) {
-                modelSelect.disabled = false;
-                const models = sampleModels[this.value] || ['Model 1', 'Model 2', 'Model 3'];
-                
-                models.forEach(model => {
-                    const option = document.createElement('option');
-                    option.value = model;
-                    option.textContent = model;
-                    modelSelect.appendChild(option);
-                });
-            } else {
-                modelSelect.disabled = true;
-            }
-        });
-
-        // Form submission
-        document.getElementById('vehicleForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const year = document.getElementById('year').value;
-            const make = document.getElementById('make').value;
-            const model = document.getElementById('model').value;
-            const alert = document.getElementById('alert');
-            const searchBtn = document.getElementById('searchBtn');
-            
-            if (!year || !make || !model) {
-                alert.className = 'alert error';
-                alert.textContent = 'Please fill in all fields';
-                alert.style.display = 'block';
-                return;
-            }
-
-            // Show loading state
-            searchBtn.classList.add('loading');
-            searchBtn.disabled = true;
-            alert.style.display = 'none';
-
-            // MILESTONE 1: Simulate search
-            console.log('Searching for tires:', { year, make, model });
-            
-            setTimeout(() => {
-                searchBtn.classList.remove('loading');
-                searchBtn.disabled = false;
+                // Store tokens
+                if (rememberMe) {
+                    localStorage.setItem('authToken', idToken);
+                    localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
+                    localStorage.setItem('rememberMe', username);
+                } else {
+                    sessionStorage.setItem('authToken', idToken);
+                    localStorage.removeItem('rememberMe');
+                }
                 
                 alert.className = 'alert success';
-                alert.textContent = `Found tires for ${year} ${make} ${model}! (API not connected yet)`;
+                alert.textContent = 'Login successful!';
                 alert.style.display = 'block';
                 
-                // MILESTONE 2+: Will redirect to results page
                 setTimeout(() => {
-                    alert.className = 'alert info';
-                    alert.textContent = 'Redirecting to results page...';
-                    // window.location.href = `results.html?year=${year}&make=${make}&model=${model}`;
-                }, 1500);
-            }, 2000);
-
-            /* MILESTONE 2+ CODE (uncomment when backend is ready):
+                    window.location.href = 'search.html';
+                }, 1000);
+            },
             
-            // Call your backend API
-            fetch('/api/search-tires', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('token')
-                },
-                body: JSON.stringify({ year, make, model })
-            })
-            .then(response => response.json())
-            .then(data => {
-                searchBtn.classList.remove('loading');
-                searchBtn.disabled = false;
-                
-                if (data.success) {
-                    // Redirect to results page
-                    window.location.href = `results.html?year=${year}&make=${make}&model=${model}`;
-                } else {
-                    alert.className = 'alert error';
-                    alert.textContent = data.message || 'Search failed';
-                    alert.style.display = 'block';
-                }
-            })
-            .catch(error => {
-                searchBtn.classList.remove('loading');
-                searchBtn.disabled = false;
-                
+            onFailure: function(err) {
                 alert.className = 'alert error';
-                alert.textContent = 'Error connecting to server';
+                alert.textContent = err.message || 'Authentication failed';
                 alert.style.display = 'block';
-                console.error('Error:', error);
-            });
-            */
-        });
-
-        // Logout function
-        function logout() {
-            // MILESTONE 1: Simple redirect
-            alert('Logging out... (not connected yet)');
-            // window.location.href = 'login.html';
+                console.error('Login error:', err);
+            },
             
-            /* MILESTONE 2+ CODE:
-            localStorage.removeItem('token');
-            window.location.href = 'login.html';
-            */
-        }
-    </script>
+            mfaRequired: function(codeDeliveryDetails) {
+                alert.className = 'alert info';
+                alert.textContent = '2FA code sent to ' + codeDeliveryDetails.DeliveryMedium;
+                alert.style.display = 'block';
+                
+                const verificationCode = prompt('Enter the 2FA code sent to ' + codeDeliveryDetails.Destination);
+                
+                if (verificationCode) {
+                    cognitoUser.sendMFACode(verificationCode, {
+                        onSuccess: function(result) {
+                            const idToken = result.getIdToken().getJwtToken();
+                            
+                            if (rememberMe) {
+                                localStorage.setItem('authToken', idToken);
+                                localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
+                                localStorage.setItem('rememberMe', username);
+                            } else {
+                                sessionStorage.setItem('authToken', idToken);
+                            }
+                            
+                            alert.className = 'alert success';
+                            alert.textContent = 'Login successful!';
+                            
+                            setTimeout(() => {
+                                window.location.href = 'search.html';
+                            }, 1000);
+                        },
+                        onFailure: function(err) {
+                            alert.className = 'alert error';
+                            alert.textContent = 'Invalid 2FA code';
+                            alert.style.display = 'block';
+                        }
+                    });
+                }
+            },
+            
+            mfaSetup: function(challengeName, challengeParameters) {
+                alert.className = 'alert info';
+                alert.textContent = 'Setting up 2FA for first time...';
+                alert.style.display = 'block';
+                
+                cognitoUser.associateSoftwareToken({
+                    associateSecretCode: function(secretCode) {
+                        const qrCodeUrl = 'otpauth://totp/TireShop:' + username + '?secret=' + secretCode + '&issuer=TireShop';
+                        alert.className = 'alert info';
+                        alert.innerHTML = 'Scan this QR code with your authenticator app:<br><img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(qrCodeUrl) + '"><br>Or enter this code manually: ' + secretCode;
+                        
+                        const totpCode = prompt('Enter the code from your authenticator app:');
+                        
+                        if (totpCode) {
+                            cognitoUser.verifySoftwareToken(totpCode, 'My Authenticator', {
+                                onSuccess: function(result) {
+                                    alert.className = 'alert success';
+                                    alert.textContent = '2FA setup complete! Please login again.';
+                                    
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 2000);
+                                },
+                                onFailure: function(err) {
+                                    alert.className = 'alert error';
+                                    alert.textContent = 'Invalid code. Please try again.';
+                                    alert.style.display = 'block';
+                                }
+                            });
+                        }
+                    },
+                    onFailure: function(err) {
+                        alert.className = 'alert error';
+                        alert.textContent = err.message;
+                        alert.style.display = 'block';
+                    }
+                });
+            }
+        });
+    });
+</script>
 </body>
 </html>
