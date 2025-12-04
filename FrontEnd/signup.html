@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tire Shop - Sign Up</title>
-    <!-- Styles are identical to the login page for consistency -->
+    <title>Tire Shop - Find Your Tires</title>
     <style>
         * {
             margin: 0;
@@ -16,326 +15,548 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
         }
 
-        /* Re-using .login-container class for consistent styling */
-        .login-container {
+        /* Navigation Bar */
+        .navbar {
             background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 420px;
-            padding: 40px;
+            padding: 16px 40px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .logo-section {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo-section h1 {
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
             color: #1a1a1a;
-            font-size: 32px;
-            margin-bottom: 8px;
+            text-decoration: none;
         }
 
-        .logo-section .tagline {
-            color: #666;
-            font-size: 14px;
+        .navbar-brand span {
+            margin-left: 10px;
         }
 
-        .logo-icon {
+        .navbar-menu {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .navbar-menu a {
+            color: #333;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .navbar-menu a:hover {
+            color: #dc2626;
+        }
+
+        .logout-btn {
+            background: #dc2626;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        .hero h1 {
             font-size: 48px;
-            margin-bottom: 10px;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: #ccc;
+        }
+
+        /* Search Card */
+        .search-card {
+            background: white;
+            border-radius: 16px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .search-card h2 {
+            color: #1a1a1a;
+            font-size: 28px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .search-card .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 16px;
         }
 
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .form-group label {
             display: block;
             color: #333;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
+        .form-group select,
         .form-group input {
             width: 100%;
-            padding: 14px 16px;
+            padding: 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
+            border-radius: 10px;
+            font-size: 16px;
             transition: all 0.3s ease;
             background: #f8f8f8;
+            appearance: none;
+            cursor: pointer;
         }
 
+        .form-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+
+        .form-group select:focus,
         .form-group input:focus {
             outline: none;
             border-color: #dc2626;
             background: #ffffff;
         }
 
-        /* Removed .remember-forgot class */
+        .form-group select:disabled {
+            background: #f0f0f0;
+            cursor: not-allowed;
+            color: #999;
+        }
 
-        .login-btn {
+        .search-btn {
             width: 100%;
-            padding: 14px;
+            padding: 18px;
             background: #dc2626;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 10px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-            margin-top: 10px; /* Added margin to replace .remember-forgot space */
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+            margin-top: 10px;
         }
 
-        .login-btn:hover {
+        .search-btn:hover {
             background: #b91c1c;
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+            box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
         }
 
-        .login-btn:active {
+        .search-btn:active {
             transform: translateY(0);
         }
 
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 30px 0;
-            color: #999;
-            font-size: 14px;
+        .search-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid #e0e0e0;
+        /* Info Cards */
+        .info-section {
+            margin-top: 60px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
         }
 
-        .divider span {
-            padding: 0 16px;
-        }
-
-        .signup-section {
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
             text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-card .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .info-card h3 {
+            color: #1a1a1a;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .info-card p {
             color: #666;
             font-size: 14px;
-        }
-
-        .signup-section a {
-            color: #dc2626;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .signup-section a:hover {
-            text-decoration: underline;
+            line-height: 1.6;
         }
 
         .alert {
-            padding: 12px;
-            border-radius: 8px;
+            padding: 14px 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
             display: none;
-            font-size: 14px;
+            font-size: 15px;
+            text-align: center;
         }
 
         .alert.error {
             background: #fee;
             color: #c00;
-            border: 1px solid #fcc;
+            border: 2px solid #fcc;
         }
 
         .alert.success {
             background: #efe;
             color: #0a0;
-            border: 1px solid #cfc;
+            border: 2px solid #cfc;
+        }
+
+        .alert.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #bbdefb;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .search-btn.loading .btn-text {
+            display: none;
+        }
+
+        .search-btn.loading .spinner {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px 20px;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .search-card {
+                padding: 30px 20px;
+            }
+
+            .info-section {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container"> <!-- Re-using class from login page -->
-        <div class="logo-section">
-            <div class="logo-icon">🚗</div>
-            <h1>Tire Match</h1>
-            <p class="tagline">Create your account</p> <!-- Updated tagline -->
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🚗</span>
+            <span>Tire Shop</span>
+        </a>
+        <div class="navbar-menu">
+            <a href="index.html">Home</a>
+            <a href="search.html">Find Tires</a>
+            <a href="#">My Vehicles</a>
+            <a href="#">Tutorial</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Find Your Perfect Tires</h1>
+            <p>Enter your vehicle information to get started</p>
         </div>
 
-        <div id="alert" class="alert"></div>
+        <!-- Search Card -->
+        <div class="search-card">
+            <h2>Vehicle Information</h2>
+            <p class="subtitle">Tell us about your car and we'll find the right tires</p>
 
-        <form id="signupForm">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    placeholder="Enter your email"
-                    required
-                >
-            </div>
-            
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    placeholder="Choose a username"
-                    required
-                >
-            </div>
+            <div id="alert" class="alert"></div>
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    placeholder="Create a password"
-                    required
-                >
-            </div>
-            
-            <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input 
-                    type="password" 
-                    id="confirmPassword" 
-                    name="confirmPassword" 
-                    placeholder="Confirm your password"
-                    required
-                >
-            </div>
+            <form id="vehicleForm">
+                <div class="form-group">
+                    <label for="year">Year</label>
+                    <select id="year" name="year" required>
+                        <option value="">Select Year</option>
+                    </select>
+                </div>
 
-            <!-- Removed "Remember me" and "Forgot Password" -->
+                <div class="form-group">
+                    <label for="make">Make</label>
+                    <select id="make" name="make" required disabled>
+                        <option value="">Select Year First</option>
+                    </select>
+                </div>
 
-            <button type="submit" class="login-btn">Create Account</button>
-        </form>
+                <div class="form-group">
+                    <label for="model">Model</label>
+                    <select id="model" name="model" required disabled>
+                        <option value="">Select Make First</option>
+                    </select>
+                </div>
 
-        <div class="divider">
-            <span>or</span>
+                <button type="submit" class="search-btn" id="searchBtn">
+                    <span class="btn-text">Search for Tires</span>
+                    <div class="spinner"></div>
+                </button>
+            </form>
         </div>
 
-        <div class="signup-section">
-            Already have an account? <a href="index.html">Sign In</a> <!-- Assumes login page is index.html -->
+        <!-- Info Section -->
+        <div class="info-section">
+            <div class="info-card">
+                <div class="icon">🔍</div>
+                <h3>Easy Search</h3>
+                <p>Simply enter your vehicle information and we'll find compatible tires from major manufacturers</p>
+            </div>
+            <div class="info-card">
+                <div class="icon">📊</div>
+                <h3>Detailed Info</h3>
+                <p>Get specifications like PSI, tire ply, size, and links to manufacturer websites</p>
+            </div>
+            <div class="info-card">
+                <div class="icon">💾</div>
+                <h3>Save History</h3>
+                <p>Your search history and vehicles are automatically saved for quick access</p>
+            </div>
         </div>
     </div>
 
-    <!-- AWS Cognito SDK - ONLY NEEDED FOR MILESTONE 2 -->
-    <!-- Uncomment this line when ready for Milestone 2: -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script> -->
-
     <script>
-        // MILESTONE 1: Basic form validation
-        // MILESTONE 2: Will use AWS Cognito for real sign-up
+        // MILESTONE 1: Populate dropdowns with sample data
+        // MILESTONE 2+: This will connect to Wheel-Size API
         
-        // Configuration for Milestone 2 (replace with your actual values)
-        const COGNITO_CONFIG = {
-            UserPoolId: 'us-east-1_XXXXXXXXX',  // Replace with your User Pool ID
-            ClientId: 'XXXXXXXXXXXXXXXXXX',      // Replace with your Client ID
-            Region: 'us-east-1'
+        // Populate Year dropdown (last 30 years)
+        const yearSelect = document.getElementById('year');
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear; year >= currentYear - 30; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            yearSelect.appendChild(option);
+        }
+
+        // Sample data for Milestone 1
+        const sampleMakes = {
+            '2024': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
+            '2023': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
+            '2022': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz'],
+            '2021': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW'],
+            '2020': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'Hyundai']
         };
 
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
+        const sampleModels = {
+            'Toyota': ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Tacoma', '4Runner'],
+            'Honda': ['Accord', 'Civic', 'CR-V', 'Pilot', 'Odyssey'],
+            'Ford': ['F-150', 'Mustang', 'Explorer', 'Escape', 'Edge'],
+            'Chevrolet': ['Silverado', 'Equinox', 'Malibu', 'Tahoe', 'Camaro'],
+            'BMW': ['3 Series', '5 Series', 'X3', 'X5', 'M3'],
+            'Mercedes-Benz': ['C-Class', 'E-Class', 'GLE', 'GLC', 'S-Class'],
+            'Tesla': ['Model 3', 'Model Y', 'Model S', 'Model X'],
+            'Nissan': ['Altima', 'Rogue', 'Sentra', 'Pathfinder'],
+            'Hyundai': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe']
+        };
+
+        // Year selection handler
+        yearSelect.addEventListener('change', function() {
+            const makeSelect = document.getElementById('make');
+            const modelSelect = document.getElementById('model');
+            
+            makeSelect.innerHTML = '<option value="">Select Make</option>';
+            modelSelect.innerHTML = '<option value="">Select Make First</option>';
+            modelSelect.disabled = true;
+            
+            if (this.value) {
+                makeSelect.disabled = false;
+                const makes = sampleMakes[this.value] || sampleMakes['2020'];
+                
+                makes.forEach(make => {
+                    const option = document.createElement('option');
+                    option.value = make;
+                    option.textContent = make;
+                    makeSelect.appendChild(option);
+                });
+            } else {
+                makeSelect.disabled = true;
+            }
+        });
+
+        // Make selection handler
+        document.getElementById('make').addEventListener('change', function() {
+            const modelSelect = document.getElementById('model');
+            
+            modelSelect.innerHTML = '<option value="">Select Model</option>';
+            
+            if (this.value) {
+                modelSelect.disabled = false;
+                const models = sampleModels[this.value] || ['Model 1', 'Model 2', 'Model 3'];
+                
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model;
+                    option.textContent = model;
+                    modelSelect.appendChild(option);
+                });
+            } else {
+                modelSelect.disabled = true;
+            }
+        });
+
+        // Form submission
+        document.getElementById('vehicleForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const year = document.getElementById('year').value;
+            const make = document.getElementById('make').value;
+            const model = document.getElementById('model').value;
             const alert = document.getElementById('alert');
+            const searchBtn = document.getElementById('searchBtn');
             
-            // MILESTONE 1 CODE (current):
-            if (!email || !username || !password || !confirmPassword) {
+            if (!year || !make || !model) {
                 alert.className = 'alert error';
                 alert.textContent = 'Please fill in all fields';
                 alert.style.display = 'block';
                 return;
             }
 
-            if (password !== confirmPassword) {
-                alert.className = 'alert error';
-                alert.textContent = 'Passwords do not match';
-                alert.style.display = 'block';
-                return;
-            }
+            // Show loading state
+            searchBtn.classList.add('loading');
+            searchBtn.disabled = true;
+            alert.style.display = 'none';
 
-            // All good (for Milestone 1)
-            alert.className = 'alert success';
-            alert.textContent = 'Account created! (Verification not connected yet)';
-            alert.style.display = 'block';
+            // MILESTONE 1: Simulate search
+            console.log('Searching for tires:', { year, make, model });
             
-            console.log('Email:', email);
-            console.log('Username:', username);
-            
-            // Simulate redirect to a verification page or login page
             setTimeout(() => {
-                alert.textContent = 'Redirecting to login...';
-                // In a real app, you might redirect to a "Please verify your email" page
-                // or directly to the login page.
-                // window.location.href = 'index.html'; 
-            }, 1500);
-
-            
-            /* MILESTONE 2 CODE (uncomment when ready):
-            
-            // Initialize Cognito User Pool
-            const poolData = {
-                UserPoolId: COGNITO_CONFIG.UserPoolId,
-                ClientId: COGNITO_CONFIG.ClientId
-            };
-            const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-            
-            // Prepare attributes (e.g., email)
-            const attributeList = [];
-            
-            const dataEmail = {
-                Name: 'email',
-                Value: email,
-            };
-            
-            const attributeEmail = new AmazonCognitoIdentity.CognitoUserAttribute(dataEmail);
-            attributeList.push(attributeEmail);
-            
-            // (Add other attributes like 'name', 'phone_number' if your pool requires them)
-
-            // Sign up the user
-            userPool.signUp(username, password, attributeList, null, function(err, result) {
-                if (err) {
-                    alert.className = 'alert error';
-                    alert.textContent = err.message || 'Sign-up failed';
-                    alert.style.display = 'block';
-                    return;
-                }
+                searchBtn.classList.remove('loading');
+                searchBtn.disabled = false;
                 
-                // Sign-up was successful
-                const cognitoUser = result.user;
-                console.log('User registered:', cognitoUser.getUsername());
-
                 alert.className = 'alert success';
-                alert.textContent = 'Sign-up successful! Please check your email for a verification code.';
+                alert.textContent = `Found tires for ${year} ${make} ${model}! (API not connected yet)`;
                 alert.style.display = 'block';
                 
-                // Redirect to a verification page
+                // MILESTONE 2+: Will redirect to results page
                 setTimeout(() => {
-                    // Pass the username to the verification page
-                    window.location.href = `verify.html?username=${username}`;
-                }, 2000);
+                    alert.className = 'alert info';
+                    alert.textContent = 'Redirecting to results page...';
+                    // window.location.href = `results.html?year=${year}&make=${make}&model=${model}`;
+                }, 1500);
+            }, 2000);
+
+            /* MILESTONE 2+ CODE (uncomment when backend is ready):
+            
+            // Call your backend API
+            fetch('/api/search-tires', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
+                },
+                body: JSON.stringify({ year, make, model })
+            })
+            .then(response => response.json())
+            .then(data => {
+                searchBtn.classList.remove('loading');
+                searchBtn.disabled = false;
+                
+                if (data.success) {
+                    // Redirect to results page
+                    window.location.href = `results.html?year=${year}&make=${make}&model=${model}`;
+                } else {
+                    alert.className = 'alert error';
+                    alert.textContent = data.message || 'Search failed';
+                    alert.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                searchBtn.classList.remove('loading');
+                searchBtn.disabled = false;
+                
+                alert.className = 'alert error';
+                alert.textContent = 'Error connecting to server';
+                alert.style.display = 'block';
+                console.error('Error:', error);
             });
             */
         });
+
+        // Logout function
+        function logout() {
+            // MILESTONE 1: Simple redirect
+            alert('Logging out... (not connected yet)');
+            // window.location.href = 'login.html';
+            
+            /* MILESTONE 2+ CODE:
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+            */
+        }
     </script>
 </body>
 </html>
