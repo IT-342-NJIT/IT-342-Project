@@ -1,8 +1,8 @@
-const LOG_API_BASE = 'http://EC2_PUBLIC_IP:3000';
+const API_BASE = 'http://3.225.45.205:3000';
 
 async function logEvent(action, details = {}) {
   try {
-    await fetch(`${LOG_API_BASE}/api/log`, {
+    await fetch(`${API_BASE}/api/log`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
