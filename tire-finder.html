@@ -538,68 +538,106 @@
         }
 
         // Sample data for vehicle search (MILESTONE 1)
-        const sampleMakes = {
-            '2024': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
-            '2023': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
-            '2022': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz'],
-            '2021': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW'],
-            '2020': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'Hyundai']
-        };
-
-        const sampleModels = {
-            'Toyota': ['Camry', 'Corolla', 'RAV4', 'Highlander', 'Tacoma', '4Runner'],
-            'Honda': ['Accord', 'Civic', 'CR-V', 'Pilot', 'Odyssey'],
-            'Ford': ['F-150', 'Mustang', 'Explorer', 'Escape', 'Edge'],
-            'Chevrolet': ['Silverado', 'Equinox', 'Malibu', 'Tahoe', 'Camaro'],
-            'BMW': ['3 Series', '5 Series', 'X3', 'X5', 'M3'],
-            'Mercedes-Benz': ['C-Class', 'E-Class', 'GLE', 'GLC', 'S-Class'],
-            'Tesla': ['Model 3', 'Model Y', 'Model S', 'Model X'],
-            'Nissan': ['Altima', 'Rogue', 'Sentra', 'Pathfinder'],
-            'Hyundai': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe']
-        };
 
         // Year selection handler
-        yearSelect.addEventListener('change', function() {
+        async function getMakesByYear(year){
+            const makesResponse = await fetch(`/api/vehicle-makes?year=${encodeURIComponent(year)}`);
+            if (!makesResponse.ok)  throw new Error('Failed to fetch makes');
+            const makesData = await makesResponse.json();
+            return makesData.makes || [];
+        }
+
+        async function getModelsByYearAndMake(year, make){
+            const modelsResponse = await fetch(`/api/vehicle-models?year=${encodeURIComponent(year)}&make=${encodeURIComponent(make)}`);
+            if (!modelsResponse.ok)  throw new Error('Failed to fetch models');
+            const modelsData = await modelsResponse.json();
+            return modelsData.models || [];
+        }
+
+        yearSelect.addEventListener('change', async function() {
             const makeSelect = document.getElementById('make');
             const modelSelect = document.getElementById('model');
+            const alertBox = document.getElementById('alert');
+
+            const year = this.value;
+             // Clear previous alerts
+
             
             makeSelect.innerHTML = '<option value="">Select Make</option>';
             modelSelect.innerHTML = '<option value="">Select Make First</option>';
+            
+            makeSelect.disabled = true;
             modelSelect.disabled = true;
             
-            if (this.value) {
-                makeSelect.disabled = false;
-                const makes = sampleMakes[this.value] || sampleMakes['2020'];
-                
+            if (!year) return;
+
+            makeSelect.innerHTML = '<option value="">Loading...</option>';
+
+            try {
+                const makes = await getMakesByYear(year);
+
+                if (!makes.length){
+                    makeSelect.innerHTML = '<option value="">No makes found for this year</option>';
+                    return;
+                }
+
+                makeSelect.innerHTML = '<option value="">Select Make</option>';
+
                 makes.forEach(make => {
                     const option = document.createElement('option');
                     option.value = make;
                     option.textContent = make;
                     makeSelect.appendChild(option);
                 });
-            } else {
-                makeSelect.disabled = true;
+
+                makeSelect.disabled = false;
+                alertBox.style.display = 'none';
+            } catch (error) {
+                alertBox.className = 'alert error';
+                alertBox.textContent = 'Error fetching makes. Please try again later.';
+                alertBox.style.display = 'block';
+                makeSelect.innerHTML = '<option value="">Select Year First</option>';
             }
         });
 
         // Make selection handler
-        document.getElementById('make').addEventListener('change', function() {
+        document.getElementById('make').addEventListener('change', async function() {
             const modelSelect = document.getElementById('model');
+            const alertBox = document.getElementById('alert');
+            const make = this.value;
+            const year = document.getElementById('year').value;
             
             modelSelect.innerHTML = '<option value="">Select Model</option>';
-            
-            if (this.value) {
-                modelSelect.disabled = false;
-                const models = sampleModels[this.value] || ['Model 1', 'Model 2', 'Model 3'];
-                
+            modelSelect.disabled = true;
+
+            if (!make || !year) return;
+
+            modelSelect.innerHTML = '<option value="">Loading. Models..</option>';
+
+            try {
+                const models = await getModelsByYearAndMake(year, make);
+
+                if (!models.length){
+                    modelSelect.innerHTML = '<option value="">No models found for this make/year</option>';
+                    return;
+                }
+
+                modelSelect.innerHTML = '<option value="">Select Model</option>';
+
                 models.forEach(model => {
                     const option = document.createElement('option');
                     option.value = model;
                     option.textContent = model;
                     modelSelect.appendChild(option);
                 });
-            } else {
-                modelSelect.disabled = true;
+
+                modelSelect.disabled = false;
+                alertBox.style.display = 'none';
+            } catch (error) {
+                alertBox.className = 'alert error';
+                alertBox.textContent = 'Error fetching models. Please try again later.';
+                alertBox.style.display = 'block';
+                modelSelect.innerHTML = '<option value="">Select Make First</option>';
             }
         });
 
