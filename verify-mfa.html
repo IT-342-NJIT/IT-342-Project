@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- verify.html -->
+<!-- verify-mfa.html -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Email - TireMatch</title>
+    <title>Enter Authentication Code - TireMatch</title>
     <style>
         * {
             margin: 0;
@@ -36,7 +36,7 @@
             margin-bottom: 30px;
         }
         
-        .email-icon {
+        .shield-icon {
             font-size: 48px;
             margin-bottom: 20px;
         }
@@ -113,6 +113,24 @@
             transform: none;
         }
         
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #666;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+        
         .error-message {
             padding: 12px;
             background: #ffebee;
@@ -122,17 +140,6 @@
             font-size: 14px;
             display: none;
             border: 1px solid #ffcdd2;
-        }
-        
-        .success-message {
-            padding: 12px;
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-            border: 1px solid #c8e6c9;
         }
         
         .info-box {
@@ -148,30 +155,6 @@
         
         .info-box p {
             margin: 5px 0;
-        }
-        
-        .resend-link {
-            margin-top: 15px;
-            text-align: center;
-        }
-        
-        .resend-link button {
-            background: none;
-            border: none;
-            color: #dc2626;
-            cursor: pointer;
-            text-decoration: underline;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .resend-link button:hover {
-            color: #b91c1c;
-        }
-
-        .resend-link button:disabled {
-            color: #ccc;
-            cursor: not-allowed;
         }
         
         .spinner {
@@ -194,21 +177,20 @@
 <body>
     <div class="verify-container">
         <div class="verify-header">
-            <div class="email-icon">📧</div>
-            <h1>Verify Your Email</h1>
-            <p>We sent a verification code to your email</p>
+            <div class="shield-icon">🔐</div>
+            <h1>Two-Factor Authentication</h1>
+            <p>Enter the 6-digit code from your authenticator app</p>
         </div>
         
         <form id="verifyForm">
             <div id="errorMessage" class="error-message"></div>
-            <div id="successMessage" class="success-message"></div>
             
             <div class="form-group">
-                <label for="verifyCode">Verification Code:</label>
+                <label for="mfaCode">Authentication Code:</label>
                 <input 
                     type="text" 
-                    id="verifyCode" 
-                    name="verifyCode" 
+                    id="mfaCode" 
+                    name="mfaCode" 
                     maxlength="6" 
                     pattern="[0-9]{6}"
                     placeholder="000000"
@@ -218,18 +200,18 @@
             </div>
             
             <button type="submit" id="verifyBtn" class="btn-primary">
-                Verify Email
+                Verify Code
+            </button>
+            
+            <button type="button" id="cancelBtn" class="btn-secondary">
+                Cancel and Return to Login
             </button>
         </form>
         
-        <div class="resend-link">
-            <button type="button" id="resendBtn">Didn't receive a code? Resend</button>
-        </div>
-        
         <div class="info-box">
-            <p><strong>💡 Check your email:</strong></p>
-            <p>The verification code was sent to the email you used during signup</p>
-            <p>Check your spam folder if you don't see it</p>
+            <p><strong>💡 Tip:</strong></p>
+            <p>Open your authenticator app to see the current code</p>
+            <p>Codes refresh every 30 seconds</p>
         </div>
     </div>
 
@@ -237,14 +219,19 @@
     <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
 
     <script>
-        // Get username from URL
+        // Get session data from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get('username') || sessionStorage.getItem('pendingUsername');
+        const session = urlParams.get('session');
+        const username = urlParams.get('username');
 
-        if (!username) {
-            alert('No username provided. Redirecting to signup.');
-            window.location.href = 'signup.html';
+        if (!session || !username) {
+            alert('Invalid session. Please login again.');
+            window.location.href = 'index.html';
         }
+
+        console.log('🔐 MFA Verification Page Loaded');
+        console.log('Username:', username);
+        console.log('Session:', session ? 'Present' : 'Missing');
 
         // YOUR COGNITO CREDENTIALS
         const USER_POOL_ID = 'us-east-1_W1ucwt5Xq';
@@ -262,106 +249,104 @@
         };
         const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
 
+        // Set the session
+        cognitoUser.Session = session;
+
         // Handle form submission
         document.getElementById('verifyForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
-            const verifyCode = document.getElementById('verifyCode').value.trim();
+            const mfaCode = document.getElementById('mfaCode').value.trim();
             
-            if (verifyCode.length !== 6 || !/^\d+$/.test(verifyCode)) {
+            if (mfaCode.length !== 6 || !/^\d+$/.test(mfaCode)) {
                 showError('Please enter a valid 6-digit code');
                 return;
             }
+
+            console.log('🔄 Submitting MFA code...');
 
             // Disable button and show loading
             const verifyBtn = document.getElementById('verifyBtn');
             verifyBtn.disabled = true;
             verifyBtn.innerHTML = '<span class="spinner"></span> Verifying...';
 
-            // Confirm email verification code
-            cognitoUser.confirmRegistration(verifyCode, true, (err, result) => {
-                if (err) {
-                    console.error('Verification error:', err);
-                    verifyBtn.disabled = false;
-                    verifyBtn.textContent = 'Verify Email';
+            // Send MFA code
+            cognitoUser.sendMFACode(mfaCode, {
+                onSuccess: (result) => {
+                    console.log('✅ MFA verification successful!');
                     
-                    if (err.code === 'CodeMismatchException') {
-                        showError('❌ Invalid code. Please check your email and try again.');
-                        document.getElementById('verifyCode').value = '';
-                        document.getElementById('verifyCode').focus();
-                    } else if (err.code === 'ExpiredCodeException') {
-                        showError('⏰ Code expired. Click "Resend" to get a new code.');
-                    } else if (err.code === 'NotAuthorizedException') {
-                        showError('❌ User already confirmed or invalid code.');
+                    // Store tokens
+                    const idToken = result.getIdToken().getJwtToken();
+                    const accessToken = result.getAccessToken().getJwtToken();
+                    const refreshToken = result.getRefreshToken().getToken();
+                    
+                    console.log('💾 Storing tokens...');
+                    localStorage.setItem('authToken', idToken);
+                    localStorage.setItem('accessToken', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    localStorage.setItem('username', username);
+                    
+                    console.log('✅ Tokens stored! Redirecting to home...');
+                    
+                    // Redirect to home page
+                    window.location.href = 'home.html';
+                },
+                onFailure: (err) => {
+                    console.error('❌ Error verifying MFA:', err);
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = 'Verify Code';
+                    
+                    if (err.code === 'CodeMismatchException' || err.message.includes('Code mismatch') || err.message.includes('Invalid code')) {
+                        showError('❌ Invalid code. Please check your authenticator app and try again.');
+                        document.getElementById('mfaCode').value = '';
+                        document.getElementById('mfaCode').focus();
+                    } else if (err.code === 'NotAuthorizedException' || err.message.includes('expired') || err.message.includes('not authorized')) {
+                        showError('⏱️ Session expired. Redirecting to login...');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
+                    } else if (err.message.includes('auth state')) {
+                        showError('❌ Invalid authentication state. Please login again.');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
                     } else {
-                        showError('❌ Verification failed: ' + err.message);
+                        showError('❌ Verification failed: ' + (err.message || 'Please try again'));
                     }
-                    return;
                 }
-
-                // Success!
-                console.log('✅ Email verified successfully!');
-                showSuccess('✅ Email verified! Redirecting to login...');
-                
-                verifyBtn.textContent = 'Verified!';
-                
-                // Clear pending username
-                sessionStorage.removeItem('pendingUsername');
-                
-                // Redirect to login after 2 seconds
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 2000);
-            });
+            }, 'SOFTWARE_TOKEN_MFA');
         });
 
-        // Handle resend code
-        document.getElementById('resendBtn').addEventListener('click', () => {
-            const resendBtn = document.getElementById('resendBtn');
-            resendBtn.disabled = true;
-            resendBtn.textContent = 'Sending...';
-            
-            cognitoUser.resendConfirmationCode((err, result) => {
-                resendBtn.disabled = false;
-                resendBtn.textContent = "Didn't receive a code? Resend";
-                
-                if (err) {
-                    console.error('Resend error:', err);
-                    showError('❌ Failed to resend code: ' + err.message);
-                    return;
-                }
-                
-                console.log('✅ Code resent!');
-                showSuccess('✅ New verification code sent! Check your email.');
-                
-                setTimeout(() => {
-                    document.getElementById('successMessage').style.display = 'none';
-                }, 5000);
-            });
+        // Handle cancel button
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            window.location.href = 'index.html';
         });
 
-        // Helper functions
+        // Helper function to show errors
         function showError(message) {
             const errorDiv = document.getElementById('errorMessage');
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
             
+            // Auto-hide after 5 seconds
             setTimeout(() => {
                 errorDiv.style.display = 'none';
             }, 5000);
         }
 
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
-        }
-
-        // Auto-format code input (only allow digits)
-        document.getElementById('verifyCode').addEventListener('input', (e) => {
+        // Auto-format MFA code input (only allow digits)
+        document.getElementById('mfaCode').addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/\D/g, '').substring(0, 6);
+        });
+
+        // Auto-submit when 6 digits are entered
+        document.getElementById('mfaCode').addEventListener('input', (e) => {
+            if (e.target.value.length === 6) {
+                // Small delay to let user see they typed 6 digits
+                setTimeout(() => {
+                    document.getElementById('verifyForm').dispatchEvent(new Event('submit'));
+                }, 300);
+            }
         });
     </script>
 </body>

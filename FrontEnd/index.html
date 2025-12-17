@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- index.html - LOGIN PAGE (FIXED) -->
+<!-- index.html - LOGIN PAGE WITH 2FA SUPPORT + LAMBDA -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -256,187 +256,224 @@
         </div>
     </div>
 
+    <!-- AWS SDK for MFA Support -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1000.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
-<script>
-    // CONFIGURATION
-    const COGNITO_CONFIG = {
-        UserPoolId: 'us-east-1_lheuY4PU5',
-        ClientId: '4hr8cktcge2tagvv46o13o3fsn',
-        Region: 'us-east-1'
-    };
 
-    // Check if username was saved (Remember Me)
-    window.addEventListener('DOMContentLoaded', function() {
-        const savedUsername = localStorage.getItem('rememberMe');
-        if (savedUsername) {
-            document.getElementById('username').value = savedUsername;
-            document.getElementById('remember').checked = true;
-        }
-    });
+    <script>
+        // CONFIGURATION
+        const COGNITO_CONFIG = {
+            UserPoolId: 'us-east-1_W1ucwt5Xq',
+            ClientId: '67dk5ue7voo0svcpoobr1clavj',
+            Region: 'us-east-1'
+        };
 
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const rememberMe = document.getElementById('remember').checked;
-        const alert = document.getElementById('alert');
-        const loginBtn = document.querySelector('.login-btn');
-        
-        // Initialize Cognito User Pool
-        const poolData = {
-            UserPoolId: COGNITO_CONFIG.UserPoolId,
-            ClientId: COGNITO_CONFIG.ClientId
-        };
-        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-        
-        // Create authentication details
-        const authenticationData = {
-            Username: username,
-            Password: password,
-        };
-        const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
-        
-        // Create cognito user
-        const userData = {
-            Username: username,
-            Pool: userPool,
-        };
-        const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-        
-        // Show loading
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Signing in...';
-        alert.className = 'alert info';
-        alert.textContent = 'Authenticating...';
-        alert.style.display = 'block';
-        
-        // Authenticate user
-        cognitoUser.authenticateUser(authenticationDetails, {
-            onSuccess: function(result) {
-                // Get tokens
-                const idToken = result.getIdToken().getJwtToken();
-                const accessToken = result.getAccessToken().getJwtToken();
-                const refreshToken = result.getRefreshToken().getToken();
+        // ⚠️ REPLACE THIS WITH YOUR API GATEWAY URL AFTER DEPLOYING LAMBDA!
+        const FORCE_TOTP_API_URL = 'https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod/force-totp';
+
+        // Configure AWS SDK
+        AWS.config.region = COGNITO_CONFIG.Region;
+
+        // Check if username was saved (Remember Me)
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedUsername = localStorage.getItem('rememberMe');
+            if (savedUsername) {
+                document.getElementById('username').value = savedUsername;
+                document.getElementById('remember').checked = true;
+            }
+
+            // Check if user just completed MFA setup
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mfa_setup') === 'complete') {
+                const alertBox = document.getElementById('alert');
+                alertBox.className = 'alert success';
+                alertBox.textContent = '✅ Two-factor authentication enabled! Please login again.';
+                alertBox.style.display = 'block';
+            }
+        });
+
+        // Force user to use TOTP MFA (not SMS) via Lambda
+        async function forceTOTPPreference(username) {
+            try {
+                console.log(`Calling Lambda to force TOTP preference for: ${username}`);
                 
-                console.log('✅ Login successful!');
-                console.log('ID Token:', idToken.substring(0, 50) + '...');
+                const response = await fetch(FORCE_TOTP_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username })
+                });
                 
-                // Store tokens securely
-                if (rememberMe) {
-                    // Long-term storage (30 days)
-                    localStorage.setItem('authToken', idToken);
-                    localStorage.setItem('accessToken', accessToken);
-                    localStorage.setItem('refreshToken', refreshToken);
-                    localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
-                    localStorage.setItem('rememberMe', username);
-                    localStorage.setItem('username', username);
+                const data = await response.json();
+                console.log('Lambda response:', data);
+                
+                if (response.ok) {
+                    console.log('✅ TOTP preference set successfully');
+                    return true;
                 } else {
-                    // Session only
-                    sessionStorage.setItem('authToken', idToken);
-                    sessionStorage.setItem('accessToken', accessToken);
-                    sessionStorage.setItem('refreshToken', refreshToken);
-                    sessionStorage.setItem('username', username);
-                    localStorage.removeItem('rememberMe');
+                    console.error('❌ Lambda error:', data);
+                    return false;
                 }
-                
-                alert.className = 'alert success';
-                alert.textContent = '✅ Login successful! Redirecting...';
-                alert.style.display = 'block';
-                
-                // FIXED: Redirect to home.html (not search.html)
-                setTimeout(() => {
-                    window.location.href = 'home.html';
-                }, 1000);
-            },
+            } catch (error) {
+                console.error('Error calling Lambda:', error);
+                // Don't block login flow if Lambda fails
+                return false;
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            onFailure: function(err) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('remember').checked;
+            const alertBox = document.getElementById('alert');
+            const loginBtn = document.querySelector('.login-btn');
+            
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+
+            // Show loading
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            alertBox.className = 'alert info';
+            alertBox.textContent = 'Authenticating...';
+            alertBox.style.display = 'block';
+
+            try {
+                // Use AWS SDK for MFA support
+                const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
+                
+                const authParams = {
+                    AuthFlow: 'USER_PASSWORD_AUTH',
+                    ClientId: COGNITO_CONFIG.ClientId,
+                    AuthParameters: {
+                        'USERNAME': username,
+                        'PASSWORD': password
+                    }
+                };
+
+                const response = await cognitoIdentityServiceProvider.initiateAuth(authParams).promise();
+                
+                console.log('Login response:', response);
+
+                // Check what type of response we got
+                if (response.AuthenticationResult) {
+                    // ✅ CASE 1: Login successful (no MFA or already verified)
+                    handleSuccessfulLogin(response.AuthenticationResult, username, rememberMe);
+
+                } else if (response.ChallengeName === 'MFA_SETUP') {
+                    // ✅ CASE 2: User needs to set up MFA for the first time
+                    console.log('MFA setup required - redirecting to setup page');
+                    
+                    // Redirect to MFA setup page with session
+                    // Lambda will be called AFTER user completes setup
+                    window.location.href = `setup-mfa.html?session=${encodeURIComponent(response.Session)}&username=${encodeURIComponent(username)}`;
+
+                } else if (response.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
+                    // ✅ CASE 3: User has MFA enabled, needs to enter code
+                    console.log('MFA verification required - redirecting to verify page');
+                    
+                    // Redirect to MFA verification page with session
+                    window.location.href = `verify-mfa.html?session=${encodeURIComponent(response.Session)}&username=${encodeURIComponent(username)}`;
+
+                } else if (response.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+                    // Handle new password requirement
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    showError('New password required. Please contact support.');
+
+                } else if (response.ChallengeName === 'SMS_MFA' || response.ChallengeName === 'MFA_REQUIRED') {
+                    // ✅ CASE 4: SMS MFA - user needs to enter code from text message
+                    console.log('SMS MFA required - redirecting to verify page');
+                    
+                    // Redirect to SMS verification page
+                    window.location.href = `verify-sms-mfa.html?session=${encodeURIComponent(response.Session)}&username=${encodeURIComponent(username)}`;
+
+                } else {
+                    // Unknown challenge
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    showError('Unexpected authentication challenge. Please try again.');
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Sign In';
                 
-                alert.className = 'alert error';
-                
-                // User-friendly error messages
-                if (err.code === 'UserNotConfirmedException') {
-                    alert.textContent = 'Please verify your email first. Check your inbox for the verification code.';
+                if (error.code === 'UserNotFoundException') {
+                    showError('User not found. Please check your username.');
+                } else if (error.code === 'NotAuthorizedException') {
+                    showError('Incorrect username or password.');
+                } else if (error.code === 'UserNotConfirmedException') {
+                    showError('Please verify your email before logging in.');
                     
-                    // Offer to resend verification
+                    // Offer to go to verification page
                     setTimeout(() => {
                         if (confirm('Would you like to go to the verification page?')) {
                             sessionStorage.setItem('pendingUsername', username);
                             window.location.href = 'verify.html?username=' + encodeURIComponent(username);
                         }
                     }, 2000);
-                } else if (err.code === 'NotAuthorizedException') {
-                    alert.textContent = 'Incorrect username or password';
-                } else if (err.code === 'UserNotFoundException') {
-                    alert.textContent = 'User not found. Please check your username or sign up.';
+                } else if (error.code === 'PasswordResetRequiredException') {
+                    showError('Password reset required. Please contact support.');
+                } else if (error.code === 'TooManyRequestsException') {
+                    showError('Too many login attempts. Please try again later.');
                 } else {
-                    alert.textContent = err.message || 'Authentication failed';
-                }
-                
-                alert.style.display = 'block';
-                console.error('Login error:', err);
-            },
-            
-            mfaRequired: function(codeDeliveryDetails) {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Sign In';
-                
-                alert.className = 'alert info';
-                alert.textContent = '2FA code sent to ' + codeDeliveryDetails.DeliveryMedium;
-                alert.style.display = 'block';
-                
-                const verificationCode = prompt('Enter the 2FA code sent to ' + codeDeliveryDetails.Destination);
-                
-                if (verificationCode) {
-                    loginBtn.disabled = true;
-                    loginBtn.textContent = 'Verifying...';
-                    
-                    cognitoUser.sendMFACode(verificationCode, {
-                        onSuccess: function(result) {
-                            const idToken = result.getIdToken().getJwtToken();
-                            const accessToken = result.getAccessToken().getJwtToken();
-                            const refreshToken = result.getRefreshToken().getToken();
-                            
-                            if (rememberMe) {
-                                localStorage.setItem('authToken', idToken);
-                                localStorage.setItem('accessToken', accessToken);
-                                localStorage.setItem('refreshToken', refreshToken);
-                                localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
-                                localStorage.setItem('rememberMe', username);
-                                localStorage.setItem('username', username);
-                            } else {
-                                sessionStorage.setItem('authToken', idToken);
-                                sessionStorage.setItem('accessToken', accessToken);
-                                sessionStorage.setItem('refreshToken', refreshToken);
-                                sessionStorage.setItem('username', username);
-                            }
-                            
-                            alert.className = 'alert success';
-                            alert.textContent = 'Login successful!';
-                            
-                            setTimeout(() => {
-                                window.location.href = 'home.html';
-                            }, 1000);
-                        },
-                        onFailure: function(err) {
-                            loginBtn.disabled = false;
-                            loginBtn.textContent = 'Sign In';
-                            
-                            alert.className = 'alert error';
-                            alert.textContent = 'Invalid 2FA code';
-                            alert.style.display = 'block';
-                        }
-                    });
-                } else {
-                    alert.className = 'alert error';
-                    alert.textContent = '2FA verification cancelled';
-                    alert.style.display = 'block';
+                    showError(error.message || 'Login failed. Please try again.');
                 }
             }
         });
-    });
-</script>
+
+        // Handle successful login
+        function handleSuccessfulLogin(authResult, username, rememberMe) {
+            const idToken = authResult.IdToken;
+            const accessToken = authResult.AccessToken;
+            const refreshToken = authResult.RefreshToken;
+            
+            console.log('✅ Login successful!');
+            console.log('ID Token:', idToken.substring(0, 50) + '...');
+            
+            // Store tokens
+            if (rememberMe) {
+                // Long-term storage (30 days)
+                localStorage.setItem('authToken', idToken);
+                localStorage.setItem('accessToken', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
+                localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
+                localStorage.setItem('rememberMe', username);
+                localStorage.setItem('username', username);
+            } else {
+                // Session only
+                sessionStorage.setItem('authToken', idToken);
+                sessionStorage.setItem('accessToken', accessToken);
+                sessionStorage.setItem('refreshToken', refreshToken);
+                sessionStorage.setItem('username', username);
+                localStorage.removeItem('rememberMe');
+            }
+            
+            const alertBox = document.getElementById('alert');
+            alertBox.className = 'alert success';
+            alertBox.textContent = '✅ Login successful! Redirecting...';
+            alertBox.style.display = 'block';
+            
+            // Redirect to home page
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 1000);
+        }
+
+        // Helper function to show errors
+        function showError(message) {
+            const alertBox = document.getElementById('alert');
+            alertBox.className = 'alert error';
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+        }
+    </script>
 </body>
 </html>

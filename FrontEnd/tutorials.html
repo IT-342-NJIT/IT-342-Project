@@ -1,10 +1,10 @@
 <!DOCTYPE html>
+<!-- tutorials.html -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tutorials - Tire Match</title>
-    <script src="auth-check.js"></script>
+    <title>Tutorials - Tire Shop</title>
     <style>
         * {
             margin: 0;
@@ -13,21 +13,12 @@
         }
 
         body {
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        body.authorized {
-            opacity: 1;
-        }
-
-        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             min-height: 100vh;
         }
 
-        /* NAVBAR (MATCHES HOME.HTML) */
+        /* NAVBAR */
         .navbar {
             background: #ffffff;
             padding: 16px 40px;
@@ -103,7 +94,7 @@
             margin-bottom: 40px;
         }
 
-        /* TUTORIAL CARD (MATCHING SEARCH-CARD + INFO-CARDS) */
+        /* TUTORIAL CARD */
         .tutorial-card {
             background: white;
             border-radius: 16px;
@@ -132,6 +123,12 @@
         }
 
         @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 16px;
+                padding: 16px 20px;
+            }
+
             .tutorial-card iframe {
                 height: 260px;
             }
@@ -145,11 +142,10 @@
     <nav class="navbar">
         <a href="home.html" class="navbar-brand">
             <span>🚗</span>
-            <span>Tire Match</span>
+            <span>Tire Shop</span>
         </a>
         <div class="navbar-menu">
             <a href="home.html">Home</a>
-            <a href="search.html">Find Tires</a>
             <a href="my-vehicles.html">My Vehicles</a>
             <a href="tutorials.html" style="color:#dc2626; font-weight:700;">Tutorials</a>
             <button class="logout-btn" onclick="logout()">Logout</button>
@@ -182,8 +178,52 @@
     </div>
 
     <script>
+        // AUTH CHECK - Inline (no external file dependency)
+        (function checkAuth() {
+            console.log('🔐 Checking authentication...');
+            
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            
+            if (!token) {
+                console.log('❌ No token found');
+                alert('Please log in to access this page');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const tokenParts = token.split('.');
+                if (tokenParts.length !== 3) {
+                    throw new Error('Invalid token format');
+                }
+
+                const payload = JSON.parse(atob(tokenParts[1]));
+                
+                if (payload.exp && payload.exp * 1000 < Date.now()) {
+                    console.log('❌ Token expired');
+                    alert('Session expired. Please log in again.');
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                console.log('✅ Authentication successful');
+                
+            } catch (error) {
+                console.error('❌ Auth error:', error);
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('Invalid session. Please log in again.');
+                window.location.href = 'index.html';
+            }
+        })();
+
         function logout() {
-            alert("Logging out... (not connected yet)");
+            console.log('👋 Logging out...');
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'index.html';
         }
     </script>
 
