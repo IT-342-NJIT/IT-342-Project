@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- index.html - LOGIN PAGE (FIXED) -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -135,12 +134,6 @@
             transform: translateY(0);
         }
 
-        .login-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .divider {
             display: flex;
             align-items: center;
@@ -195,19 +188,13 @@
             color: #0a0;
             border: 1px solid #cfc;
         }
-
-        .alert.info {
-            background: #e3f2fd;
-            color: #1976d2;
-            border: 1px solid #bbdefb;
-        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="logo-section">
             <div class="logo-icon">🚗</div>
-            <h1>Tire Match</h1>
+            <h1>Tire Shop</h1>
             <p class="tagline">Find the perfect tires for your vehicle</p>
         </div>
 
@@ -241,7 +228,7 @@
                     <input type="checkbox" id="remember">
                     <span>Remember me</span>
                 </label>
-                <a href="forgot-password.html" class="forgot-password">Forgot Password?</a>
+                <a href="#" class="forgot-password">Forgot Password?</a>
             </div>
 
             <button type="submit" class="login-btn">Sign In</button>
@@ -252,191 +239,113 @@
         </div>
 
         <div class="signup-section">
-            Don't have an account? <a href="signup.html">Sign Up</a>
+            Don't have an account? <a href="#">Sign Up</a>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
-<script>
-    // CONFIGURATION
-    const COGNITO_CONFIG = {
-        UserPoolId: 'us-east-1_lheuY4PU5',
-        ClientId: '4hr8cktcge2tagvv46o13o3fsn',
-        Region: 'us-east-1'
-    };
+    <!-- AWS Cognito SDK - ONLY NEEDED FOR MILESTONE 2 -->
+    <!-- Uncomment this line when ready for Milestone 2: -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script> -->
 
-    // Check if username was saved (Remember Me)
-    window.addEventListener('DOMContentLoaded', function() {
-        const savedUsername = localStorage.getItem('rememberMe');
-        if (savedUsername) {
-            document.getElementById('username').value = savedUsername;
-            document.getElementById('remember').checked = true;
-        }
-    });
+    <script>
+        // MILESTONE 1: Basic form validation (non-functional authentication)
+        // MILESTONE 2: Will use AWS Cognito for real authentication
+        
+        // Configuration for Milestone 2 (replace with your actual values)
+        const COGNITO_CONFIG = {
+            UserPoolId: 'us-east-1_XXXXXXXXX',  // Replace with your User Pool ID
+            ClientId: 'XXXXXXXXXXXXXXXXXX',      // Replace with your Client ID
+            Region: 'us-east-1'
+        };
 
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const rememberMe = document.getElementById('remember').checked;
-        const alert = document.getElementById('alert');
-        const loginBtn = document.querySelector('.login-btn');
-        
-        // Initialize Cognito User Pool
-        const poolData = {
-            UserPoolId: COGNITO_CONFIG.UserPoolId,
-            ClientId: COGNITO_CONFIG.ClientId
-        };
-        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-        
-        // Create authentication details
-        const authenticationData = {
-            Username: username,
-            Password: password,
-        };
-        const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
-        
-        // Create cognito user
-        const userData = {
-            Username: username,
-            Pool: userPool,
-        };
-        const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-        
-        // Show loading
-        loginBtn.disabled = true;
-        loginBtn.textContent = 'Signing in...';
-        alert.className = 'alert info';
-        alert.textContent = 'Authenticating...';
-        alert.style.display = 'block';
-        
-        // Authenticate user
-        cognitoUser.authenticateUser(authenticationDetails, {
-            onSuccess: function(result) {
-                // Get tokens
-                const idToken = result.getIdToken().getJwtToken();
-                const accessToken = result.getAccessToken().getJwtToken();
-                const refreshToken = result.getRefreshToken().getToken();
-                
-                console.log('✅ Login successful!');
-                console.log('ID Token:', idToken.substring(0, 50) + '...');
-                
-                // Store tokens securely
-                if (rememberMe) {
-                    // Long-term storage (30 days)
-                    localStorage.setItem('authToken', idToken);
-                    localStorage.setItem('accessToken', accessToken);
-                    localStorage.setItem('refreshToken', refreshToken);
-                    localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
-                    localStorage.setItem('rememberMe', username);
-                    localStorage.setItem('username', username);
-                } else {
-                    // Session only
-                    sessionStorage.setItem('authToken', idToken);
-                    sessionStorage.setItem('accessToken', accessToken);
-                    sessionStorage.setItem('refreshToken', refreshToken);
-                    sessionStorage.setItem('username', username);
-                    localStorage.removeItem('rememberMe');
-                }
-                
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const alert = document.getElementById('alert');
+            
+            // MILESTONE 1 CODE (current):
+            if (username && password) {
                 alert.className = 'alert success';
-                alert.textContent = '✅ Login successful! Redirecting...';
+                alert.textContent = 'Login form submitted! (Authentication not connected yet)';
                 alert.style.display = 'block';
                 
-                // FIXED: Redirect to home.html (not search.html)
+                console.log('Username:', username);
+                console.log('Password:', password);
+                
+                // For Milestone 1, simulate successful login after 1 second
                 setTimeout(() => {
-                    window.location.href = 'home.html';
+                    alert.textContent = 'Redirecting to dashboard...';
+                    // In Milestone 2, this will redirect to actual dashboard
                 }, 1000);
-            },
-            
-            onFailure: function(err) {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Sign In';
-                
+            } else {
                 alert.className = 'alert error';
-                
-                // User-friendly error messages
-                if (err.code === 'UserNotConfirmedException') {
-                    alert.textContent = 'Please verify your email first. Check your inbox for the verification code.';
-                    
-                    // Offer to resend verification
-                    setTimeout(() => {
-                        if (confirm('Would you like to go to the verification page?')) {
-                            sessionStorage.setItem('pendingUsername', username);
-                            window.location.href = 'verify.html?username=' + encodeURIComponent(username);
-                        }
-                    }, 2000);
-                } else if (err.code === 'NotAuthorizedException') {
-                    alert.textContent = 'Incorrect username or password';
-                } else if (err.code === 'UserNotFoundException') {
-                    alert.textContent = 'User not found. Please check your username or sign up.';
-                } else {
-                    alert.textContent = err.message || 'Authentication failed';
-                }
-                
+                alert.textContent = 'Please fill in all fields';
                 alert.style.display = 'block';
-                console.error('Login error:', err);
-            },
+            }
             
-            mfaRequired: function(codeDeliveryDetails) {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Sign In';
-                
-                alert.className = 'alert info';
-                alert.textContent = '2FA code sent to ' + codeDeliveryDetails.DeliveryMedium;
-                alert.style.display = 'block';
-                
-                const verificationCode = prompt('Enter the 2FA code sent to ' + codeDeliveryDetails.Destination);
-                
-                if (verificationCode) {
-                    loginBtn.disabled = true;
-                    loginBtn.textContent = 'Verifying...';
+            /* MILESTONE 2 CODE (uncomment when ready):
+            
+            // Initialize Cognito User Pool
+            const poolData = {
+                UserPoolId: COGNITO_CONFIG.UserPoolId,
+                ClientId: COGNITO_CONFIG.ClientId
+            };
+            const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+            
+            // Create authentication details
+            const authenticationData = {
+                Username: username,
+                Password: password,
+            };
+            const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+            
+            // Create cognito user
+            const userData = {
+                Username: username,
+                Pool: userPool,
+            };
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+            
+            // Authenticate user
+            cognitoUser.authenticateUser(authenticationDetails, {
+                onSuccess: function(result) {
+                    alert.className = 'alert success';
+                    alert.textContent = 'Login successful!';
+                    alert.style.display = 'block';
                     
-                    cognitoUser.sendMFACode(verificationCode, {
-                        onSuccess: function(result) {
-                            const idToken = result.getIdToken().getJwtToken();
-                            const accessToken = result.getAccessToken().getJwtToken();
-                            const refreshToken = result.getRefreshToken().getToken();
-                            
-                            if (rememberMe) {
-                                localStorage.setItem('authToken', idToken);
-                                localStorage.setItem('accessToken', accessToken);
-                                localStorage.setItem('refreshToken', refreshToken);
-                                localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
-                                localStorage.setItem('rememberMe', username);
-                                localStorage.setItem('username', username);
-                            } else {
-                                sessionStorage.setItem('authToken', idToken);
-                                sessionStorage.setItem('accessToken', accessToken);
-                                sessionStorage.setItem('refreshToken', refreshToken);
-                                sessionStorage.setItem('username', username);
-                            }
-                            
-                            alert.className = 'alert success';
-                            alert.textContent = 'Login successful!';
-                            
-                            setTimeout(() => {
-                                window.location.href = 'home.html';
-                            }, 1000);
-                        },
-                        onFailure: function(err) {
-                            loginBtn.disabled = false;
-                            loginBtn.textContent = 'Sign In';
-                            
-                            alert.className = 'alert error';
-                            alert.textContent = 'Invalid 2FA code';
-                            alert.style.display = 'block';
-                        }
-                    });
-                } else {
+                    // Store tokens
+                    const accessToken = result.getAccessToken().getJwtToken();
+                    const idToken = result.getIdToken().getJwtToken();
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                },
+                
+                onFailure: function(err) {
                     alert.className = 'alert error';
-                    alert.textContent = '2FA verification cancelled';
+                    alert.textContent = err.message || 'Authentication failed';
+                    alert.style.display = 'block';
+                },
+                
+                mfaRequired: function(codeDeliveryDetails) {
+                    // 2FA code required
+                    const verificationCode = prompt('Please enter the 2FA code sent to ' + codeDeliveryDetails.DeliveryMedium);
+                    cognitoUser.sendMFACode(verificationCode, this);
+                },
+                
+                newPasswordRequired: function(userAttributes, requiredAttributes) {
+                    // User needs to set a new password
+                    alert.className = 'alert error';
+                    alert.textContent = 'New password required. Please contact support.';
                     alert.style.display = 'block';
                 }
-            }
+            });
+            */
         });
-    });
-</script>
+    </script>
 </body>
 </html>

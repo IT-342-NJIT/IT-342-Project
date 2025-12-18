@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- home.html - PROTECTED PAGE (with JWT validation) -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,11 +15,6 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             min-height: 100vh;
-            display: none; /* Hide until auth check passes */
-        }
-
-        body.authorized {
-            display: block; /* Show after auth check */
         }
 
         /* Navigation Bar */
@@ -63,19 +57,78 @@
             color: #dc2626;
         }
 
-                body {
-            opacity: 0;
-            transition: opacity 0.3s;
+        /* Global Search Bar */
+        .search-container {
+            position: relative;
+            margin: 0 20px;
         }
 
-        body.authorized {
-            opacity: 1;
-        }
-
-        .user-welcome {
-            color: #666;
+        .global-search {
+            padding: 8px 40px 8px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
             font-size: 14px;
-            margin-right: 10px;
+            width: 300px;
+            transition: all 0.3s ease;
+            background: #f8f8f8;
+        }
+
+        .global-search:focus {
+            outline: none;
+            border-color: #dc2626;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            cursor: pointer;
+        }
+
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #f8f8f8;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-category {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .suggestion-name {
+            color: #1a1a1a;
+            font-weight: 600;
         }
 
         .logout-btn {
@@ -315,6 +368,17 @@
                 padding: 16px 20px;
             }
 
+            .navbar-menu {
+                flex-direction: column;
+                gap: 16px;
+                width: 100%;
+            }
+
+            .global-search {
+                width: 100%;
+                margin: 10px 0;
+            }
+
             .hero h1 {
                 font-size: 36px;
             }
@@ -332,15 +396,21 @@
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar">
-        <a href="home.html" class="navbar-brand">
+        <a href="index.html" class="navbar-brand">
             <span>🚗</span>
             <span>Tire Shop</span>
         </a>
         <div class="navbar-menu">
-            <span class="user-welcome">Welcome, <span id="usernameDisplay">User</span>!</span>
             <a href="home.html">Home</a>
+            <a href="tire-finder.html">Find Tires</a>
             <a href="#">My Vehicles</a>
             <a href="#">Tutorial</a>
+	    <a href="privacy_policy.html">Privacy Policy</a>
+            <div class="search-container">
+                <input type="text" class="global-search" placeholder="Search tires by brand, model..." id="globalSearch">
+                <span class="search-icon" onclick="performGlobalSearch()">🔍</span>
+                <div class="search-suggestions" id="searchSuggestions"></div>
+            </div>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </nav>
@@ -410,78 +480,8 @@
     </div>
 
     <script>
-        // ========================================
-        // STEP 1: CHECK AUTHENTICATION (RUNS FIRST)
-        // ========================================
-        (function checkAuth() {
-            console.log('🔐 Checking authentication...');
-            
-            // Try to get token from localStorage or sessionStorage
-            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            const username = localStorage.getItem('username') || sessionStorage.getItem('username');
-            
-            if (!token) {
-                console.log('❌ No auth token found - redirecting to login');
-                alert('Please log in to access this page');
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            // Check token expiration (if stored)
-            const expiry = localStorage.getItem('tokenExpiry');
-            if (expiry && Date.now() > parseInt(expiry)) {
-                console.log('❌ Token expired - redirecting to login');
-                localStorage.clear();
-                sessionStorage.clear();
-                alert('Your session has expired. Please log in again.');
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            // Decode JWT token (basic check - not validating signature)
-            try {
-                const tokenParts = token.split('.');
-                if (tokenParts.length !== 3) {
-                    throw new Error('Invalid token format');
-                }
-                
-                const payload = JSON.parse(atob(tokenParts[1]));
-                console.log('✅ Token payload:', payload);
-                
-                // Check if token is expired
-                if (payload.exp && payload.exp * 1000 < Date.now()) {
-                    console.log('❌ Token expired - redirecting to login');
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    alert('Your session has expired. Please log in again.');
-                    window.location.href = 'index.html';
-                    return;
-                }
-                
-                // Token is valid - show page
-                console.log('✅ Authentication successful!');
-                document.body.classList.add('authorized');
-                
-                // Display username
-                if (username) {
-                    document.getElementById('usernameDisplay').textContent = username;
-                } else if (payload['cognito:username']) {
-                    document.getElementById('usernameDisplay').textContent = payload['cognito:username'];
-                }
-                
-            } catch (error) {
-                console.error('❌ Error decoding token:', error);
-                localStorage.clear();
-                sessionStorage.clear();
-                alert('Invalid session. Please log in again.');
-                window.location.href = 'index.html';
-                return;
-            }
-        })();
-        
-        // ========================================
-        // STEP 2: POPULATE FORM (AFTER AUTH CHECK)
-        // ========================================
+        // MILESTONE 1: Populate dropdowns with sample data
+        // MILESTONE 2+: This will connect to Wheel-Size API
         
         // Populate Year dropdown (last 30 years)
         const yearSelect = document.getElementById('year');
@@ -591,17 +591,23 @@
                 alert.className = 'alert success';
                 alert.textContent = `Found tires for ${year} ${make} ${model}! (API not connected yet)`;
                 alert.style.display = 'block';
+                
+                // MILESTONE 2+: Will redirect to results page
+                setTimeout(() => {
+                    alert.className = 'alert info';
+                    alert.textContent = 'Redirecting to results page...';
+                    // window.location.href = `results.html?year=${year}&make=${make}&model=${model}`;
+                }, 1500);
             }, 2000);
 
-            /* MILESTONE 3+ CODE (uncomment when backend API is ready):
+            /* MILESTONE 2+ CODE (uncomment when backend is ready):
             
-            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-            
-            fetch('https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod/search-tires', {
+            // Call your backend API
+            fetch('/api/search-tires', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Authorization': 'Bearer ' + localStorage.getItem('token')
                 },
                 body: JSON.stringify({ year, make, model })
             })
@@ -631,29 +637,120 @@
             */
         });
 
-        // ========================================
-        // LOGOUT FUNCTION
-        // ========================================
+        // Global Search Functionality
+        const tireDatabase = [
+            // Popular tire brands and models
+            { type: 'brand', name: 'Michelin', category: 'Brand' },
+            { type: 'brand', name: 'Bridgestone', category: 'Brand' },
+            { type: 'brand', name: 'Goodyear', category: 'Brand' },
+            { type: 'brand', name: 'Continental', category: 'Brand' },
+            { type: 'brand', name: 'Pirelli', category: 'Brand' },
+            { type: 'brand', name: 'Yokohama', category: 'Brand' },
+            { type: 'brand', name: 'Dunlop', category: 'Brand' },
+            { type: 'brand', name: 'Falken', category: 'Brand' },
+            { type: 'brand', name: 'Cooper', category: 'Brand' },
+            { type: 'brand', name: 'Hankook', category: 'Brand' },
+            
+            // Popular tire models
+            { type: 'model', name: 'Michelin Pilot Sport 4S', category: 'Performance Tire', brand: 'Michelin' },
+            { type: 'model', name: 'Bridgestone Potenza RE-71RS', category: 'Performance Tire', brand: 'Bridgestone' },
+            { type: 'model', name: 'Goodyear Eagle F1 Asymmetric', category: 'Performance Tire', brand: 'Goodyear' },
+            { type: 'model', name: 'Continental ExtremeContact DWS06', category: 'All-Season Tire', brand: 'Continental' },
+            { type: 'model', name: 'Pirelli P Zero', category: 'Performance Tire', brand: 'Pirelli' },
+            { type: 'model', name: 'Michelin CrossClimate 2', category: 'All-Season Tire', brand: 'Michelin' },
+            { type: 'model', name: 'Bridgestone Blizzak WS90', category: 'Winter Tire', brand: 'Bridgestone' },
+            { type: 'model', name: 'Goodyear Assurance WeatherReady', category: 'All-Season Tire', brand: 'Goodyear' },
+            { type: 'model', name: 'Continental TerrainContact H/T', category: 'Highway Tire', brand: 'Continental' },
+            { type: 'model', name: 'Cooper Discoverer AT3 4S', category: 'All-Terrain Tire', brand: 'Cooper' },
+            
+            // Tire categories
+            { type: 'category', name: 'All-Season Tires', category: 'Category' },
+            { type: 'category', name: 'Performance Tires', category: 'Category' },
+            { type: 'category', name: 'Winter Tires', category: 'Category' },
+            { type: 'category', name: 'All-Terrain Tires', category: 'Category' },
+            { type: 'category', name: 'Highway Tires', category: 'Category' },
+            { type: 'category', name: 'Mud-Terrain Tires', category: 'Category' }
+        ];
+
+        let searchTimeout;
+        
+        // Global search input handler
+        document.getElementById('globalSearch').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase().trim();
+            const suggestions = document.getElementById('searchSuggestions');
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                suggestions.style.display = 'none';
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                const filtered = tireDatabase.filter(item => 
+                    item.name.toLowerCase().includes(query) ||
+                    item.category.toLowerCase().includes(query) ||
+                    (item.brand && item.brand.toLowerCase().includes(query))
+                ).slice(0, 8); // Limit to 8 suggestions
+                
+                if (filtered.length > 0) {
+                    suggestions.innerHTML = filtered.map(item => `
+                        <div class=\"suggestion-item\" onclick=\"selectSuggestion('${item.name}', '${item.type}')\">
+                            <div class=\"suggestion-category\">${item.category}</div>
+                            <div class=\"suggestion-name\">${item.name}</div>
+                        </div>
+                    `).join('');
+                    suggestions.style.display = 'block';
+                } else {
+                    suggestions.innerHTML = '<div class=\"suggestion-item\"><div class=\"suggestion-name\">No results found</div></div>';
+                    suggestions.style.display = 'block';
+                }
+            }, 300);
+        });
+
+        // Handle search suggestion selection
+        function selectSuggestion(name, type) {
+            document.getElementById('globalSearch').value = name;
+            document.getElementById('searchSuggestions').style.display = 'none';
+            performGlobalSearch();
+        }
+
+        // Perform global search
+        function performGlobalSearch() {
+            const query = document.getElementById('globalSearch').value.trim();
+            if (query) {
+                // Redirect to search results with the query
+                window.location.href = `search-results.html?q=${encodeURIComponent(query)}&type=tire`;
+            }
+        }
+
+        // Handle Enter key in search
+        document.getElementById('globalSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                performGlobalSearch();
+            }
+            if (e.key === 'Escape') {
+                document.getElementById('searchSuggestions').style.display = 'none';
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                document.getElementById('searchSuggestions').style.display = 'none';
+            }
+        });
+
+        // Logout function
         function logout() {
-            console.log('🔓 Logging out...');
+            // MILESTONE 1: Simple redirect
+            alert('Logging out... (not connected yet)');
+            // window.location.href = 'index.html';
             
-            // Clear all stored tokens
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('tokenExpiry');
-            localStorage.removeItem('username');
-            
-            sessionStorage.removeItem('authToken');
-            sessionStorage.removeItem('accessToken');
-            sessionStorage.removeItem('refreshToken');
-            sessionStorage.removeItem('username');
-            
-            // Keep rememberMe username if it was checked
-            // (But remove tokens for security)
-            
-            alert('Logged out successfully');
+            /* MILESTONE 2+ CODE:
+            localStorage.removeItem('token');
             window.location.href = 'index.html';
+            */
         }
     </script>
 </body>
