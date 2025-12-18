@@ -7,10 +7,18 @@ async function logEvent(action, details = {}) {
   try {
     const token =
       localStorage.getItem('authToken') ||
-      sessionStorage.getItem('authToken') ||
-      null;
+      sessionStorage.getItem('authToken');
+      let userId = 'guest';
+      if (token) {
+        try {
+          // Decode JWT to get actual user ID
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          userId = payload.sub || payload['cognito:username'] || 'authenticatedUser';
+        } catch (e) {
+        userId = 'authenticatedUser';
+      }
+    }
 
-    const userId = token ? 'authenticatedUser' : 'guest';
 
     await fetch(LOG_ENDPOINT, {
       method: 'POST',
