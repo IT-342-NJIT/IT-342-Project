@@ -1,7 +1,7 @@
 // logger.js
 
 // 👇 Replace with your API Gateway invoke URL + /log (NO trailing slash after /log)
-const LOG_ENDPOINT = 'https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod';
+const LOG_ENDPOINT = 'https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod/backend-log';
 
 async function logEvent(action, details = {}) {
   try {
