@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<!-- verify.html -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - TireMatch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .verify-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .verify-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .email-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .verify-header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .verify-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 28px;
+            text-align: center;
+            letter-spacing: 14px;
+            font-family: monospace;
+            transition: border-color 0.3s;
+            background: #f8f8f8;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #dc2626;
+            background: white;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .error-message {
+            padding: 12px;
+            background: #ffebee;
+            color: #c62828;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .success-message {
+            padding: 12px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .info-box {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0369a1;
+            text-align: center;
+            border: 1px solid #bae6fd;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+        }
+        
+        .resend-link {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .resend-link button {
+            background: none;
+            border: none;
+            color: #dc2626;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .resend-link button:hover {
+            color: #b91c1c;
+        }
+
+        .resend-link button:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #dc2626;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        <div class="verify-header">
+            <div class="email-icon">📧</div>
+            <h1>Verify Your Email</h1>
+            <p>We sent a verification code to your email</p>
+        </div>
+        
+        <form id="verifyForm">
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            
+            <div class="form-group">
+                <label for="verifyCode">Verification Code:</label>
+                <input 
+                    type="text" 
+                    id="verifyCode" 
+                    name="verifyCode" 
+                    maxlength="6" 
+                    pattern="[0-9]{6}"
+                    placeholder="000000"
+                    required
+                    autocomplete="off"
+                    autofocus>
+            </div>
+            
+            <button type="submit" id="verifyBtn" class="btn-primary">
+                Verify Email
+            </button>
+        </form>
+        
+        <div class="resend-link">
+            <button type="button" id="resendBtn">Didn't receive a code? Resend</button>
+        </div>
+        
+        <div class="info-box">
+            <p><strong>💡 Check your email:</strong></p>
+            <p>The verification code was sent to the email you used during signup</p>
+            <p>Check your spam folder if you don't see it</p>
+        </div>
+    </div>
+
+    <!-- Cognito Identity SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+
+    <script>
+        // Get username from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username') || sessionStorage.getItem('pendingUsername');
+
+        if (!username) {
+            alert('No username provided. Redirecting to signup.');
+            window.location.href = 'signup.html';
+        }
+
+        // YOUR COGNITO CREDENTIALS
+        const USER_POOL_ID = 'us-east-1_W1ucwt5Xq';
+        const CLIENT_ID = '67dk5ue7voo0svcpoobr1clavj';
+
+        const poolData = {
+            UserPoolId: USER_POOL_ID,
+            ClientId: CLIENT_ID
+        };
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        const userData = {
+            Username: username,
+            Pool: userPool
+        };
+        const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+        // Handle form submission
+        document.getElementById('verifyForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const verifyCode = document.getElementById('verifyCode').value.trim();
+            
+            if (verifyCode.length !== 6 || !/^\d+$/.test(verifyCode)) {
+                showError('Please enter a valid 6-digit code');
+                return;
+            }
+
+            // Disable button and show loading
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span class="spinner"></span> Verifying...';
+
+            // Confirm email verification code
+            cognitoUser.confirmRegistration(verifyCode, true, (err, result) => {
+                if (err) {
+                    console.error('Verification error:', err);
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = 'Verify Email';
+                    
+                    if (err.code === 'CodeMismatchException') {
+                        showError('❌ Invalid code. Please check your email and try again.');
+                        document.getElementById('verifyCode').value = '';
+                        document.getElementById('verifyCode').focus();
+                    } else if (err.code === 'ExpiredCodeException') {
+                        showError('⏰ Code expired. Click "Resend" to get a new code.');
+                    } else if (err.code === 'NotAuthorizedException') {
+                        showError('❌ User already confirmed or invalid code.');
+                    } else {
+                        showError('❌ Verification failed: ' + err.message);
+                    }
+                    return;
+                }
+
+                // Success!
+                console.log('✅ Email verified successfully!');
+                showSuccess('✅ Email verified! Redirecting to login...');
+                
+                verifyBtn.textContent = 'Verified!';
+                
+                // Clear pending username
+                sessionStorage.removeItem('pendingUsername');
+                
+                // Redirect to login after 2 seconds
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 2000);
+            });
+        });
+
+        // Handle resend code
+        document.getElementById('resendBtn').addEventListener('click', () => {
+            const resendBtn = document.getElementById('resendBtn');
+            resendBtn.disabled = true;
+            resendBtn.textContent = 'Sending...';
+            
+            cognitoUser.resendConfirmationCode((err, result) => {
+                resendBtn.disabled = false;
+                resendBtn.textContent = "Didn't receive a code? Resend";
+                
+                if (err) {
+                    console.error('Resend error:', err);
+                    showError('❌ Failed to resend code: ' + err.message);
+                    return;
+                }
+                
+                console.log('✅ Code resent!');
+                showSuccess('✅ New verification code sent! Check your email.');
+                
+                setTimeout(() => {
+                    document.getElementById('successMessage').style.display = 'none';
+                }, 5000);
+            });
+        });
+
+        // Helper functions
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Auto-format code input (only allow digits)
+        document.getElementById('verifyCode').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 6);
+        });
+    </script>
+    <script src="logger.js"></script>
+</body>
+</html>

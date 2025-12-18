@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
+=======
+<!-- index.html - LOGIN PAGE WITH 2FA SUPPORT + LAMBDA -->
+>>>>>>> 7b9caf224a71297da8eb4f9432000fbdad286f37
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -243,6 +247,7 @@
         </div>
     </div>
 
+<<<<<<< HEAD
     <!-- AWS Cognito SDK - ONLY NEEDED FOR MILESTONE 2 -->
     <!-- Uncomment this line when ready for Milestone 2: -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script> -->
@@ -342,10 +347,232 @@
                     alert.className = 'alert error';
                     alert.textContent = 'New password required. Please contact support.';
                     alert.style.display = 'block';
+=======
+    <!-- AWS SDK for MFA Support -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1000.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+
+    <script>
+        // CONFIGURATION
+        const COGNITO_CONFIG = {
+            UserPoolId: 'us-east-1_W1ucwt5Xq',
+            ClientId: '67dk5ue7voo0svcpoobr1clavj',
+            Region: 'us-east-1'
+        };
+
+        // ⚠️ REPLACE THIS WITH YOUR API GATEWAY URL AFTER DEPLOYING LAMBDA!
+        const FORCE_TOTP_API_URL = 'https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod/force-totp';
+
+        // Configure AWS SDK
+        AWS.config.region = COGNITO_CONFIG.Region;
+
+        // Check if username was saved (Remember Me)
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedUsername = localStorage.getItem('rememberMe');
+            if (savedUsername) {
+                document.getElementById('username').value = savedUsername;
+                document.getElementById('remember').checked = true;
+            }
+
+            // Check if user just completed MFA setup
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mfa_setup') === 'complete') {
+                const alertBox = document.getElementById('alert');
+                alertBox.className = 'alert success';
+                alertBox.textContent = '✅ Two-factor authentication enabled! Please login again.';
+                alertBox.style.display = 'block';
+            }
+        });
+
+        // Force user to use TOTP MFA (not SMS) via Lambda
+        async function forceTOTPPreference(username) {
+            try {
+                console.log(`Calling Lambda to force TOTP preference for: ${username}`);
+                
+                const response = await fetch(FORCE_TOTP_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username })
+                });
+                
+                const data = await response.json();
+                console.log('Lambda response:', data);
+                
+                if (response.ok) {
+                    console.log('✅ TOTP preference set successfully');
+                    return true;
+                } else {
+                    console.error('❌ Lambda error:', data);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error calling Lambda:', error);
+                // Don't block login flow if Lambda fails
+                return false;
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('remember').checked;
+            const alertBox = document.getElementById('alert');
+            const loginBtn = document.querySelector('.login-btn');
+            
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+
+            // Show loading
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+            alertBox.className = 'alert info';
+            alertBox.textContent = 'Authenticating...';
+            alertBox.style.display = 'block';
+
+            try {
+                // Use AWS SDK for MFA support
+                const cognitoIdentityServiceProvider = new AWS.CognitoIdentityServiceProvider();
+                
+                const authParams = {
+                    AuthFlow: 'USER_PASSWORD_AUTH',
+                    ClientId: COGNITO_CONFIG.ClientId,
+                    AuthParameters: {
+                        'USERNAME': username,
+                        'PASSWORD': password
+                    }
+                };
+
+                const response = await cognitoIdentityServiceProvider.initiateAuth(authParams).promise();
+                
+                console.log('Login response:', response);
+
+                // Check what type of response we got
+                if (response.AuthenticationResult) {
+                    // ✅ CASE 1: Login successful (no MFA or already verified)
+                    handleSuccessfulLogin(response.AuthenticationResult, username, rememberMe);
+
+                } else if (response.ChallengeName === 'MFA_SETUP') {
+                    // ✅ CASE 2: User needs to set up MFA for the first time
+                    console.log('MFA setup required - redirecting to setup page');
+                    
+                    // Redirect to MFA setup page with session
+                    // Lambda will be called AFTER user completes setup
+                    window.location.href = `setup-mfa.html?session=${encodeURIComponent(response.Session)}&username=${encodeURIComponent(username)}`;
+
+                } else if (response.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
+                    // ✅ CASE 3: User has MFA enabled, needs to enter code
+                    console.log('MFA verification required - redirecting to verify page');
+                    
+                    // Redirect to MFA verification page with session
+                    window.location.href = `verify-mfa.html?session=${encodeURIComponent(response.Session)}&username=${encodeURIComponent(username)}`;
+
+                } else if (response.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+                    // Handle new password requirement
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    showError('New password required. Please contact support.');
+
+                } else if (response.ChallengeName === 'SMS_MFA' || response.ChallengeName === 'MFA_REQUIRED') {
+                    // ✅ CASE 4: SMS MFA - user needs to enter code from text message
+                    console.log('SMS MFA required - redirecting to verify page');
+                    
+                    // Redirect to SMS verification page
+                    window.location.href = `verify-sms-mfa.html?session=${encodeURIComponent(response.Session)}&username=${encodeURIComponent(username)}`;
+
+                } else {
+                    // Unknown challenge
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    showError('Unexpected authentication challenge. Please try again.');
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+                
+                if (error.code === 'UserNotFoundException') {
+                    showError('User not found. Please check your username.');
+                } else if (error.code === 'NotAuthorizedException') {
+                    showError('Incorrect username or password.');
+                } else if (error.code === 'UserNotConfirmedException') {
+                    showError('Please verify your email before logging in.');
+                    
+                    // Offer to go to verification page
+                    setTimeout(() => {
+                        if (confirm('Would you like to go to the verification page?')) {
+                            sessionStorage.setItem('pendingUsername', username);
+                            window.location.href = 'verify.html?username=' + encodeURIComponent(username);
+                        }
+                    }, 2000);
+                } else if (error.code === 'PasswordResetRequiredException') {
+                    showError('Password reset required. Please contact support.');
+                } else if (error.code === 'TooManyRequestsException') {
+                    showError('Too many login attempts. Please try again later.');
+                } else {
+                    showError(error.message || 'Login failed. Please try again.');
+>>>>>>> 7b9caf224a71297da8eb4f9432000fbdad286f37
                 }
             });
             */
         });
+<<<<<<< HEAD
     </script>
+=======
+
+        // Handle successful login
+        function handleSuccessfulLogin(authResult, username, rememberMe) {
+            const idToken = authResult.IdToken;
+            const accessToken = authResult.AccessToken;
+            const refreshToken = authResult.RefreshToken;
+            
+            console.log('✅ Login successful!');
+            console.log('ID Token:', idToken.substring(0, 50) + '...');
+            
+            // Store tokens
+            if (rememberMe) {
+                // Long-term storage (30 days)
+                localStorage.setItem('authToken', idToken);
+                localStorage.setItem('accessToken', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
+                localStorage.setItem('tokenExpiry', Date.now() + (30 * 24 * 60 * 60 * 1000));
+                localStorage.setItem('rememberMe', username);
+                localStorage.setItem('username', username);
+            } else {
+                // Session only
+                sessionStorage.setItem('authToken', idToken);
+                sessionStorage.setItem('accessToken', accessToken);
+                sessionStorage.setItem('refreshToken', refreshToken);
+                sessionStorage.setItem('username', username);
+                localStorage.removeItem('rememberMe');
+            }
+            
+            const alertBox = document.getElementById('alert');
+            alertBox.className = 'alert success';
+            alertBox.textContent = '✅ Login successful! Redirecting...';
+            alertBox.style.display = 'block';
+            
+            // Redirect to home page
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 1000);
+        }
+
+        // Helper function to show errors
+        function showError(message) {
+            const alertBox = document.getElementById('alert');
+            alertBox.className = 'alert error';
+            alertBox.textContent = message;
+            alertBox.style.display = 'block';
+        }
+    </script>
+    <script src="logger.js"></script>
+>>>>>>> 7b9caf224a71297da8eb4f9432000fbdad286f37
 </body>
 </html>

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<!-- verify-mfa.html -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Authentication Code - TireMatch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .verify-container {
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        
+        .verify-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .shield-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .verify-header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .verify-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 28px;
+            text-align: center;
+            letter-spacing: 14px;
+            font-family: monospace;
+            transition: border-color 0.3s;
+            background: #f8f8f8;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #dc2626;
+            background: white;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #b91c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #666;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .btn-secondary:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+        
+        .error-message {
+            padding: 12px;
+            background: #ffebee;
+            color: #c62828;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .info-box {
+            margin-top: 25px;
+            padding: 15px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0369a1;
+            text-align: center;
+            border: 1px solid #bae6fd;
+        }
+        
+        .info-box p {
+            margin: 5px 0;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #dc2626;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        <div class="verify-header">
+            <div class="shield-icon">🔐</div>
+            <h1>Two-Factor Authentication</h1>
+            <p>Enter the 6-digit code from your authenticator app</p>
+        </div>
+        
+        <form id="verifyForm">
+            <div id="errorMessage" class="error-message"></div>
+            
+            <div class="form-group">
+                <label for="mfaCode">Authentication Code:</label>
+                <input 
+                    type="text" 
+                    id="mfaCode" 
+                    name="mfaCode" 
+                    maxlength="6" 
+                    pattern="[0-9]{6}"
+                    placeholder="000000"
+                    required
+                    autocomplete="off"
+                    autofocus>
+            </div>
+            
+            <button type="submit" id="verifyBtn" class="btn-primary">
+                Verify Code
+            </button>
+            
+            <button type="button" id="cancelBtn" class="btn-secondary">
+                Cancel and Return to Login
+            </button>
+        </form>
+        
+        <div class="info-box">
+            <p><strong>💡 Tip:</strong></p>
+            <p>Open your authenticator app to see the current code</p>
+            <p>Codes refresh every 30 seconds</p>
+        </div>
+    </div>
+
+    <!-- Cognito Identity SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+
+    <script>
+        // Get session data from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const session = urlParams.get('session');
+        const username = urlParams.get('username');
+
+        if (!session || !username) {
+            alert('Invalid session. Please login again.');
+            window.location.href = 'index.html';
+        }
+
+        console.log('🔐 MFA Verification Page Loaded');
+        console.log('Username:', username);
+        console.log('Session:', session ? 'Present' : 'Missing');
+
+        // YOUR COGNITO CREDENTIALS
+        const USER_POOL_ID = 'us-east-1_W1ucwt5Xq';
+        const CLIENT_ID = '67dk5ue7voo0svcpoobr1clavj';
+
+        const poolData = {
+            UserPoolId: USER_POOL_ID,
+            ClientId: CLIENT_ID
+        };
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        const userData = {
+            Username: username,
+            Pool: userPool
+        };
+        const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+        // Set the session
+        cognitoUser.Session = session;
+
+        // Handle form submission
+        document.getElementById('verifyForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const mfaCode = document.getElementById('mfaCode').value.trim();
+            
+            if (mfaCode.length !== 6 || !/^\d+$/.test(mfaCode)) {
+                showError('Please enter a valid 6-digit code');
+                return;
+            }
+
+            console.log('🔄 Submitting MFA code...');
+
+            // Disable button and show loading
+            const verifyBtn = document.getElementById('verifyBtn');
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span class="spinner"></span> Verifying...';
+
+            // Send MFA code
+            cognitoUser.sendMFACode(mfaCode, {
+                onSuccess: (result) => {
+                    console.log('✅ MFA verification successful!');
+                    
+                    // Store tokens
+                    const idToken = result.getIdToken().getJwtToken();
+                    const accessToken = result.getAccessToken().getJwtToken();
+                    const refreshToken = result.getRefreshToken().getToken();
+                    
+                    console.log('💾 Storing tokens...');
+                    localStorage.setItem('authToken', idToken);
+                    localStorage.setItem('accessToken', accessToken);
+                    localStorage.setItem('refreshToken', refreshToken);
+                    localStorage.setItem('username', username);
+                    
+                    console.log('✅ Tokens stored! Redirecting to home...');
+                    
+                    // Redirect to home page
+                    window.location.href = 'home.html';
+                },
+                onFailure: (err) => {
+                    console.error('❌ Error verifying MFA:', err);
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = 'Verify Code';
+                    
+                    if (err.code === 'CodeMismatchException' || err.message.includes('Code mismatch') || err.message.includes('Invalid code')) {
+                        showError('❌ Invalid code. Please check your authenticator app and try again.');
+                        document.getElementById('mfaCode').value = '';
+                        document.getElementById('mfaCode').focus();
+                    } else if (err.code === 'NotAuthorizedException' || err.message.includes('expired') || err.message.includes('not authorized')) {
+                        showError('⏱️ Session expired. Redirecting to login...');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
+                    } else if (err.message.includes('auth state')) {
+                        showError('❌ Invalid authentication state. Please login again.');
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 2000);
+                    } else {
+                        showError('❌ Verification failed: ' + (err.message || 'Please try again'));
+                    }
+                }
+            }, 'SOFTWARE_TOKEN_MFA');
+        });
+
+        // Handle cancel button
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+        // Helper function to show errors
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Auto-format MFA code input (only allow digits)
+        document.getElementById('mfaCode').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 6);
+        });
+
+        // Auto-submit when 6 digits are entered
+        document.getElementById('mfaCode').addEventListener('input', (e) => {
+            if (e.target.value.length === 6) {
+                // Small delay to let user see they typed 6 digits
+                setTimeout(() => {
+                    document.getElementById('verifyForm').dispatchEvent(new Event('submit'));
+                }, 300);
+            }
+        });
+    </script>
+    <script src="logger.js"></script>
+</body>
+</html>
