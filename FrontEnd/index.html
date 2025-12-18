@@ -1,8 +1,6 @@
 <!DOCTYPE html>
-<<<<<<< HEAD
-=======
+<!DOCTYPE html>
 <!-- index.html - LOGIN PAGE WITH 2FA SUPPORT + LAMBDA -->
->>>>>>> 7b9caf224a71297da8eb4f9432000fbdad286f37
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -138,6 +136,12 @@
             transform: translateY(0);
         }
 
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .divider {
             display: flex;
             align-items: center;
@@ -192,13 +196,19 @@
             color: #0a0;
             border: 1px solid #cfc;
         }
+
+        .alert.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="logo-section">
             <div class="logo-icon">🚗</div>
-            <h1>Tire Shop</h1>
+            <h1>Tire Match</h1>
             <p class="tagline">Find the perfect tires for your vehicle</p>
         </div>
 
@@ -232,7 +242,7 @@
                     <input type="checkbox" id="remember">
                     <span>Remember me</span>
                 </label>
-                <a href="#" class="forgot-password">Forgot Password?</a>
+                <a href="forgot-password.html" class="forgot-password">Forgot Password?</a>
             </div>
 
             <button type="submit" class="login-btn">Sign In</button>
@@ -243,111 +253,10 @@
         </div>
 
         <div class="signup-section">
-            Don't have an account? <a href="#">Sign Up</a>
+            Don't have an account? <a href="signup.html">Sign Up</a>
         </div>
     </div>
 
-<<<<<<< HEAD
-    <!-- AWS Cognito SDK - ONLY NEEDED FOR MILESTONE 2 -->
-    <!-- Uncomment this line when ready for Milestone 2: -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script> -->
-
-    <script>
-        // MILESTONE 1: Basic form validation (non-functional authentication)
-        // MILESTONE 2: Will use AWS Cognito for real authentication
-        
-        // Configuration for Milestone 2 (replace with your actual values)
-        const COGNITO_CONFIG = {
-            UserPoolId: 'us-east-1_XXXXXXXXX',  // Replace with your User Pool ID
-            ClientId: 'XXXXXXXXXXXXXXXXXX',      // Replace with your Client ID
-            Region: 'us-east-1'
-        };
-
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const alert = document.getElementById('alert');
-            
-            // MILESTONE 1 CODE (current):
-            if (username && password) {
-                alert.className = 'alert success';
-                alert.textContent = 'Login form submitted! (Authentication not connected yet)';
-                alert.style.display = 'block';
-                
-                console.log('Username:', username);
-                console.log('Password:', password);
-                
-                // For Milestone 1, simulate successful login after 1 second
-                setTimeout(() => {
-                    alert.textContent = 'Redirecting to dashboard...';
-                    // In Milestone 2, this will redirect to actual dashboard
-                }, 1000);
-            } else {
-                alert.className = 'alert error';
-                alert.textContent = 'Please fill in all fields';
-                alert.style.display = 'block';
-            }
-            
-            /* MILESTONE 2 CODE (uncomment when ready):
-            
-            // Initialize Cognito User Pool
-            const poolData = {
-                UserPoolId: COGNITO_CONFIG.UserPoolId,
-                ClientId: COGNITO_CONFIG.ClientId
-            };
-            const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-            
-            // Create authentication details
-            const authenticationData = {
-                Username: username,
-                Password: password,
-            };
-            const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
-            
-            // Create cognito user
-            const userData = {
-                Username: username,
-                Pool: userPool,
-            };
-            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
-            
-            // Authenticate user
-            cognitoUser.authenticateUser(authenticationDetails, {
-                onSuccess: function(result) {
-                    alert.className = 'alert success';
-                    alert.textContent = 'Login successful!';
-                    alert.style.display = 'block';
-                    
-                    // Store tokens
-                    const accessToken = result.getAccessToken().getJwtToken();
-                    const idToken = result.getIdToken().getJwtToken();
-                    
-                    // Redirect to dashboard
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
-                },
-                
-                onFailure: function(err) {
-                    alert.className = 'alert error';
-                    alert.textContent = err.message || 'Authentication failed';
-                    alert.style.display = 'block';
-                },
-                
-                mfaRequired: function(codeDeliveryDetails) {
-                    // 2FA code required
-                    const verificationCode = prompt('Please enter the 2FA code sent to ' + codeDeliveryDetails.DeliveryMedium);
-                    cognitoUser.sendMFACode(verificationCode, this);
-                },
-                
-                newPasswordRequired: function(userAttributes, requiredAttributes) {
-                    // User needs to set a new password
-                    alert.className = 'alert error';
-                    alert.textContent = 'New password required. Please contact support.';
-                    alert.style.display = 'block';
-=======
     <!-- AWS SDK for MFA Support -->
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1000.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
@@ -517,14 +426,9 @@
                     showError('Too many login attempts. Please try again later.');
                 } else {
                     showError(error.message || 'Login failed. Please try again.');
->>>>>>> 7b9caf224a71297da8eb4f9432000fbdad286f37
                 }
-            });
-            */
+            }
         });
-<<<<<<< HEAD
-    </script>
-=======
 
         // Handle successful login
         function handleSuccessfulLogin(authResult, username, rememberMe) {
@@ -573,6 +477,5 @@
         }
     </script>
     <script src="logger.js"></script>
->>>>>>> 7b9caf224a71297da8eb4f9432000fbdad286f37
 </body>
 </html>
