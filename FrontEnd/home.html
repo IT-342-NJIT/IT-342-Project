@@ -1270,6 +1270,24 @@
             window.location.href = 'index.html';
         }
       </script>
-      <script src="logger.js"></script>
+     <script src="logger.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const vehicleForm = document.getElementById("vehicleForm");
+    if (vehicleForm) {
+        vehicleForm.addEventListener("submit", () => {
+            logEvent(ACTIONS.BUTTON_CLICK, { form: "vehicle_search" });
+        });
+    }
+
+    const logoutBtn = document.querySelector(".logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            logEvent(ACTIONS.LOGOUT);
+        });
+    }
+});
+</script>
+
 </body>
 </html>

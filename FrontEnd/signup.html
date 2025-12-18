@@ -481,5 +481,16 @@
         });
     </script>
     <script src="logger.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("signupForm");
+    if (form) {
+        form.addEventListener("submit", () => {
+            logEvent(ACTIONS.SIGNUP);
+        });
+    }
+});
+</script>
+
 </body>
 </html>

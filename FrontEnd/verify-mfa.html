@@ -348,6 +348,17 @@
             }
         });
     </script>
-    <script src="logger.js"></script>
+   <script src="logger.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("verifyMfaForm");
+    if (form) {
+        form.addEventListener("submit", () => {
+            logEvent(ACTIONS.OPEN_PAGE, { type: "mfa_verify" });
+        });
+    }
+});
+</script>
+
 </body>
 </html>

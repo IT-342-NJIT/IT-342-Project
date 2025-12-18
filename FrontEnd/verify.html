@@ -364,5 +364,16 @@
         });
     </script>
     <script src="logger.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("verifyForm");
+    if (form) {
+        form.addEventListener("submit", () => {
+            logEvent(ACTIONS.PASSWORD_RESET, { step: "verify_code" });
+        });
+    }
+});
+</script>
+
 </body>
 </html>
