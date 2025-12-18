@@ -3,6 +3,30 @@
 // 👇 Replace with your API Gateway invoke URL + /log (NO trailing slash after /log)
 const LOG_ENDPOINT = 'https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod/backend-log';
 
+// Define all possible actions centrally (clean, consistent)
+export const ACTIONS = {
+  PAGE_VIEW: "page_view",
+
+  // Authentication
+  LOGIN: "login",
+  LOGOUT: "logout",
+  SIGNUP: "signup",
+  PASSWORD_RESET: "password_reset",
+
+  // UI interactions
+  BUTTON_CLICK: "button_click",
+  OPEN_MODAL: "open_modal",
+  CLOSE_MODAL: "close_modal",
+
+  // Navigation
+  NAVIGATE: "navigate",
+  OPEN_PAGE: "open_page",
+
+  // Errors
+  ERROR: "error",
+  INVALID_INPUT: "invalid_input",
+};
+
 async function logEvent(action, details = {}) {
   try {
     const token =
