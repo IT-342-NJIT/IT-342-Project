@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- home.html - UPDATED WITH TIRE SEARCH -->
+<!-- home.html - FINAL VERSION WITH TIRE MODAL -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tire Finder - Tire Shop</title>
+    <title>Tire Finder - Tire Match</title>
     <style>
         * {
             margin: 0;
@@ -314,9 +314,7 @@
             border: 2px solid #bbdefb;
         }
 
-        /* ==========================================
-           TIRE RESULTS SECTION - NEW!
-           ========================================== */
+        /* TIRE RESULTS SECTION */
         #tireResults {
             display: none;
             margin-top: 40px;
@@ -370,6 +368,7 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             display: flex;
             flex-direction: column;
+            cursor: pointer;
         }
 
         .tire-card:hover {
@@ -387,6 +386,7 @@
             border-radius: 8px;
             margin-bottom: 15px;
             overflow: hidden;
+            position: relative;
         }
 
         .tire-image {
@@ -400,11 +400,11 @@
             transform: scale(1.08);
         }
 
-        .tire-info {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+        .tire-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
 
         .tire-brand {
             color: #dc2626;
@@ -433,23 +433,33 @@
             margin-bottom: 5px;
         }
 
+        .tire-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
         .tire-condition {
             color: #059669;
             font-size: 0.9em;
             font-weight: 500;
         }
 
+        .tire-price-section {
+            margin: 10px 0;
+        }
+
         .tire-price {
             color: #1a1a1a;
             font-size: 1.6em;
             font-weight: bold;
-            margin: 10px 0;
         }
 
         .tire-shipping {
             color: #7f8c8d;
             font-size: 0.85em;
-            margin-bottom: 5px;
+            margin-top: 5px;
         }
 
         .tire-location {
@@ -458,22 +468,18 @@
             margin-bottom: 10px;
         }
 
-        .view-ebay-button {
-            display: block;
-            background: #dc2626;
-            color: white;
+        .tire-click-hint {
             text-align: center;
-            padding: 12px 20px;
-            border-radius: 8px;
-            text-decoration: none;
+            color: #007bff;
             font-weight: 600;
-            margin-top: auto;
-            transition: background 0.3s ease;
+            font-size: 14px;
+            margin-top: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        .view-ebay-button:hover {
-            background: #b91c1c;
-            text-decoration: none;
+        .tire-card:hover .tire-click-hint {
+            opacity: 1;
         }
 
         /* Loading State */
@@ -505,13 +511,217 @@
             color: #666;
         }
 
-        /* Info Cards */
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+        /* TIRE DETAIL MODAL */
+        .tire-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        .tire-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .tire-modal-content {
+            position: relative;
+            background: white;
+            border-radius: 16px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .tire-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 28px;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .tire-modal-close:hover {
+            background: rgba(0, 0, 0, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .tire-modal-body {
+            display: block;
+            padding: 40px;
+        }
+
+        .tire-modal-image-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .tire-modal-image {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .tire-modal-size-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #000, #333);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .tire-modal-details-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .tire-modal-name {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .tire-modal-info-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .tire-modal-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+
+        .tire-modal-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .tire-modal-value {
+            font-size: 18px;
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        .tire-modal-price-section {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8f4);
+        }
+
+        .tire-modal-price {
+            font-size: 32px;
+            font-weight: 700;
+            color: #28a745;
+        }
+
+        .tire-modal-ebay-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #0064d2, #0053ba);
+            color: white;
+            text-decoration: none;
+            padding: 18px 40px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 100, 210, 0.3);
+            margin-top: 10px;
+        }
+
+        .tire-modal-ebay-button:hover {
+            background: linear-gradient(135deg, #0053ba, #004299);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 100, 210, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .tire-modal-body {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 30px 20px;
+            }
+            
+            .tire-modal-name {
+                font-size: 24px;
+            }
+            
+            .tire-modal-price {
+                font-size: 28px;
+            }
+            
+            .tire-modal-ebay-button {
+                font-size: 18px;
+                padding: 16px 32px;
+            }
+        }
+
+        /* Info Cards */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
 
         .info-card {
             background: white;
@@ -574,7 +784,7 @@
      <nav class = "navbar">
         <a href = "home.html" class="navbar-brand">
             <span>🚗</span>
-            <span>Tire Shop</span>
+            <span>Tire Match</span>
         </a>
         <div class="navbar-menu">
             <a href="home.html">Home</a>
@@ -701,10 +911,7 @@
             </div>
         </div>
 
-        <!-- ==========================================
-             TIRE RESULTS SECTION - NEW!
-             Shows after user clicks search
-             ========================================== -->
+        <!-- TIRE RESULTS SECTION -->
         <div id="tireResults"></div>
 
         <!-- Info Cards -->
@@ -722,29 +929,61 @@
             <div class="info-card">
                 <div class="icon">💰</div>
                 <h4>Best Prices</h4>
-                <p>Compare prices from top tire manufacturers</p>
-            </div>
-            <div class="info-card">
-                <div class="icon">📊</div>
-                <h4>Detailed Specs</h4>
-                <p>View PSI, ply rating, speed rating, and more</p>
+                <p>Compare average prices from top tire manufacturers</p>
             </div>
         </div>
       </div>
 
-      <!-- AUTH CHECK - LOAD THIS FIRST, BEFORE OTHER SCRIPTS -->
+      <!-- TIRE DETAIL MODAL -->
+      <div id="tireModal" class="tire-modal" style="display: none;">
+          <div class="tire-modal-overlay" onclick="closeTireModal()"></div>
+          <div class="tire-modal-content">
+              <button class="tire-modal-close" onclick="closeTireModal()">&times;</button>
+              
+              <div class="tire-modal-body">                 
+                  <!-- Right side - Details -->
+                  <div class="tire-modal-details-section">
+                      <h2 id="modalTireName" class="tire-modal-name"></h2>
+                <div class="tire-modal-info-grid">
+                        <div class="tire-modal-info-item">
+                            <span class="tire-modal-label">Brand:</span>
+                            <span id="modalTireBrand" class="tire-modal-value"></span>
+                        </div>
+                        
+                        <div class="tire-modal-info-item">
+                            <span class="tire-modal-label">Model:</span>
+                            <span id="modalTireModel" class="tire-modal-value"></span>
+                        </div>
+                        
+                        <div class="tire-modal-info-item">
+                            <span class="tire-modal-label">Size:</span>
+                            <span id="modalTireSizeText" class="tire-modal-value"></span>
+                        </div>
+                        
+                        <div class="tire-modal-info-item">
+                            <span class="tire-modal-label">Made In:</span>
+                            <span id="modalTireMadeIn" class="tire-modal-value"></span>
+                        </div>
+                    </div>      
+                      
+                    
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- AUTH CHECK -->
       <script src="auth-check.js"></script>
 
       <script>
-        // ========================================
         // CONFIGURATION
-        // ========================================
         const API_BASE_URL = 'https://avzid5kib3.execute-api.us-east-1.amazonaws.com/prod';
-        const TIRE_SEARCH_API = `${API_BASE_URL}/tire-search`; // NEW!
+        const TIRE_SEARCH_API = `${API_BASE_URL}/tire-search`;
 
-        // ========================================
+        // Global variable for modal
+        let currentTireData = null;
+
         // HELPER FUNCTIONS
-        // ========================================
         function showAlert(type, message) {
             const alert = document.getElementById('alert');
             alert.className = 'alert ' + type;
@@ -757,20 +996,15 @@
             }, 5000);
         }
 
-        // Tab switching functionality
         function switchTab(tabName) {
             const vehicleTab = document.getElementById('vehicleTab');
             const sizeTab = document.getElementById('sizeTab');
             const tabBtns = document.querySelectorAll('.tab-btn');
 
-            // Hide all tabs
             vehicleTab.classList.remove('active');
             sizeTab.classList.remove('active');
-
-            // Remove active class from all buttons
             tabBtns.forEach(btn => btn.classList.remove('active'));
 
-            // Show selected tab
             if (tabName === 'vehicle') {
                 vehicleTab.classList.add('active');
                 tabBtns[0].classList.add('active');
@@ -779,22 +1013,46 @@
                 tabBtns[1].classList.add('active');
             }
 
-            // Clear alert and results
             document.getElementById('alert').style.display = 'none';
             document.getElementById('tireResults').style.display = 'none';
         }
 
-        // Populate Year dropdown (last 30 years)
+        function openTireModal(tire) {
+            currentTireData = tire;
+            
+            document.getElementById('modalTireName').textContent = `${tire.brand} ${tire.model}`;
+            document.getElementById('modalTireBrand').textContent = tire.brand;
+            document.getElementById('modalTireModel').textContent = tire.model;
+            document.getElementById('modalTireSizeText').textContent = tire.size;
+            document.getElementById('modalTireMadeIn').textContent = tire.madeIn;
+            
+            document.getElementById('tireModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTireModal() {
+            document.getElementById('tireModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            currentTireData = null;
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeTireModal();
+            }
+        });
+
+        // Populate Year dropdown
         const yearSelect = document.getElementById('year');
         const currentYear = new Date().getFullYear();
-        for (let year = currentYear; year >= currentYear - 25; year--) {
+        for (let year = currentYear; year >= 2000; year--) {
             const option = document.createElement('option');
             option.value = year;
             option.textContent = year;
             yearSelect.appendChild(option);
         }
 
-        // Sample data for vehicle search (MILESTONE 1)
+        // Sample data
         const sampleMakes = {
             '2024': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
             '2023': ['Toyota', 'Honda', 'Ford', 'Chevrolet', 'BMW', 'Mercedes-Benz', 'Tesla'],
@@ -815,7 +1073,6 @@
             'Hyundai': ['Elantra', 'Sonata', 'Tucson', 'Santa Fe']
         };
 
-        // Year selection handler
         yearSelect.addEventListener('change', function() {
             const makeSelect = document.getElementById('make');
             const modelSelect = document.getElementById('model');
@@ -839,7 +1096,6 @@
             }
         });
 
-        // Make selection handler
         document.getElementById('make').addEventListener('change', function() {
             const modelSelect = document.getElementById('model');
             
@@ -860,9 +1116,7 @@
             }
         });
 
-        // ========================================
-        // AUTO-FILL FROM URL PARAMETERS
-        // ========================================
+        // AUTO-FILL FROM URL
         window.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const year = urlParams.get('year');
@@ -873,17 +1127,14 @@
                 console.log('🚗 Auto-filling vehicle from URL:', year, make, model);
                 
                 setTimeout(() => {
-                    // Set year
                     document.getElementById('year').value = year;
                     document.getElementById('year').dispatchEvent(new Event('change'));
                     
                     setTimeout(() => {
-                        // Set make
                         document.getElementById('make').value = make;
                         document.getElementById('make').dispatchEvent(new Event('change'));
                         
                         setTimeout(() => {
-                            // Set model
                             document.getElementById('model').value = model;
                             showAlert('success', '✅ Vehicle loaded from your saved vehicles!');
                         }, 500);
@@ -892,9 +1143,7 @@
             }
         });
 
-        // ========================================
-        // SAVE VEHICLE FUNCTIONALITY
-        // ========================================
+        // SAVE VEHICLE
         document.getElementById('saveVehicleBtn').addEventListener('click', async function() {
             const year = document.getElementById('year').value;
             const make = document.getElementById('make').value;
@@ -952,16 +1201,13 @@
             }
         });
 
-        // ========================================
-        // VEHICLE FORM SUBMISSION - UPDATED!
-        // ========================================
+        // VEHICLE FORM SUBMISSION
         document.getElementById('vehicleForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const year = document.getElementById('year').value;
             const make = document.getElementById('make').value;
             const model = document.getElementById('model').value;
-            const alert = document.getElementById('alert');
             const submitBtn = this.querySelector('.search-btn');
             
             if (!year || !make || !model) {
@@ -971,11 +1217,8 @@
 
             console.log(`🔍 Searching for tires: ${year} ${make} ${model}`);
             
-            // Disable button
             submitBtn.disabled = true;
             submitBtn.textContent = 'Searching...';
-            
-            // Show loading
             showLoading();
             
             try {
@@ -1006,7 +1249,7 @@
                 
             } catch (error) {
                 console.error('Error searching for tires:', error);
-                showAlert('error', 'Failed to search for tires. Please try again. Error: ' + error.message);
+                showAlert('error', 'Failed to search for tires. Please try again.');
                 hideLoading();
             } finally {
                 submitBtn.disabled = false;
@@ -1014,16 +1257,13 @@
             }
         });
 
-        // ========================================
-        // TIRE SIZE FORM SUBMISSION - UPDATED!
-        // ========================================
+        // TIRE SIZE FORM SUBMISSION
         document.getElementById('sizeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const width = document.getElementById('width').value;
             const aspectRatio = document.getElementById('aspectRatio').value;
             const rimSize = document.getElementById('rimSize').value;
-            const alert = document.getElementById('alert');
             const submitBtn = this.querySelector('.search-btn');
             
             if (!width || !aspectRatio || !rimSize) {
@@ -1034,22 +1274,18 @@
             const tireSize = `${width}/${aspectRatio}R${rimSize}`;
             console.log(`🔍 Searching for tire size: ${tireSize}`);
             
-            // Disable button
             submitBtn.disabled = true;
             submitBtn.textContent = 'Searching...';
-            
-            // Show loading
             showLoading();
             
             try {
-                // For tire size search, we'll search by the size string on eBay
                 const response = await fetch(TIRE_SEARCH_API, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        year: '2020',  // Generic search
+                        year: '2020',
                         make: 'tire',
                         model: tireSize
                     })
@@ -1070,7 +1306,7 @@
                 
             } catch (error) {
                 console.error('Error searching for tires:', error);
-                showAlert('error', 'Failed to search for tires. Please try again. Error: ' + error.message);
+                showAlert('error', 'Failed to search for tires. Please try again.');
                 hideLoading();
             } finally {
                 submitBtn.disabled = false;
@@ -1078,24 +1314,20 @@
             }
         });
 
-        // ========================================
-        // DISPLAY TIRE RESULTS - NEW!
-        // ========================================
+        // DISPLAY TIRE RESULTS
         function displayTireResults(tires, vehicle) {
             const resultsContainer = document.getElementById('tireResults');
             resultsContainer.innerHTML = '';
             resultsContainer.style.display = 'block';
             
-            // Create header
             const header = document.createElement('div');
             header.className = 'results-header';
             header.innerHTML = `
                 <h2>Tire Results for ${vehicle}</h2>
-                <p>${tires.length} tires found on eBay</p>
+                <p>${tires.length} tires found</p>
             `;
             resultsContainer.appendChild(header);
             
-            // Create grid
             const gridContainer = document.createElement('div');
             gridContainer.className = 'tire-grid';
             
@@ -1105,17 +1337,17 @@
             });
             
             resultsContainer.appendChild(gridContainer);
-            
-            // Scroll to results
             resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        // ========================================
-        // CREATE TIRE CARD - NEW!
-        // ========================================
+        // CREATE TIRE CARD WITH MODAL TRIGGER
         function createTireCard(tire) {
             const card = document.createElement('div');
             card.className = 'tire-card';
+            
+            card.addEventListener('click', function() {
+                openTireModal(tire);
+            });
             
             const priceDisplay = tire.currency === 'USD' 
                 ? `$${tire.price.toFixed(2)}`
@@ -1125,40 +1357,27 @@
                 ? `+ $${tire.shipping.toFixed(2)} shipping`
                 : 'Free shipping';
             
-            card.innerHTML = `
-                <div class="tire-image-container">
-                    <img src="${tire.image || 'https://via.placeholder.com/200x200?text=No+Image'}" 
-                         alt="${tire.name}" 
-                         class="tire-image"
-                         onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
-                </div>
-                <div class="tire-info">
-                    <div class="tire-brand">${tire.brand}</div>
-                    <div class="tire-name">${tire.name}</div>
-                    <div class="tire-size-badge">${tire.size}</div>
-                    <div class="tire-condition">${tire.condition}</div>
-                    <div class="tire-price">${priceDisplay}</div>
-                    <div class="tire-shipping">${shippingDisplay}</div>
-                    ${tire.location ? `<div class="tire-location">📍 ${tire.location}</div>` : ''}
-                    <a href="${tire.url}" target="_blank" class="view-ebay-button">
-                        View on eBay →
-                    </a>
-                </div>
-            `;
-            
+card.innerHTML = `
+    <div class="tire-details" style="gap: 8px;">
+        <div class="tire-brand">${tire.brand}</div>
+        <div class="tire-name" style="margin-bottom: 0;">${tire.model}</div>
+        <div class="tire-size-badge" style="margin-bottom: 0;">${tire.size}</div>
+        <div style="font-size: 0.9em; color: #666; margin: 0;">🌍 Made in ${tire.madeIn}</div>
+        <div class="tire-click-hint" style="margin-top: auto; padding-top: 12px;">Click for details →</div>
+    </div>
+`;
+                        
             return card;
         }
 
-        // ========================================
-        // LOADING & ERROR STATES - NEW!
-        // ========================================
+        // LOADING & ERROR STATES
         function showLoading() {
             const resultsContainer = document.getElementById('tireResults');
             resultsContainer.style.display = 'block';
             resultsContainer.innerHTML = `
                 <div class="loading-container">
                     <div class="loading-spinner"></div>
-                    <p>Searching eBay for tires...</p>
+                    <p>Searching for tires...</p>
                 </div>
             `;
             resultsContainer.scrollIntoView({ behavior: 'smooth' });
@@ -1177,21 +1396,19 @@
                 <div class="loading-container">
                     <h3 style="color: #dc2626; margin-bottom: 15px;">No tires found</h3>
                     <p style="color: #666;">
-                        We couldn't find any tires for ${vehicle} on eBay.<br>
+                        We couldn't find any tires for ${vehicle}.<br>
                         Try checking your vehicle information or search by tire size instead.
                     </p>
                 </div>
             `;
         }
-      </script>
 
-      <script>
-      function logout() {
-          console.log('👋 Logging out...');
-          localStorage.clear();
-          sessionStorage.clear();
-          window.location.href = 'index.html';
-      }
+        function logout() {
+            console.log('👋 Logging out...');
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        }
       </script>
       <script src="logger.js"></script>
 </body>

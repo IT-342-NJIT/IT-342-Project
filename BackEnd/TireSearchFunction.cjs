@@ -1,10 +1,8 @@
 /**
- * TireMatch - Tire Search Lambda with DynamoDB Integration + GZIP Support
- * Compatible with Node.js 20.x runtime (AWS SDK v3)
+ * TireMatch - Tire Search Lambda with DynamoDB + ENHANCED MOCK TIRE DATA
+ * Uses real DynamoDB lookup, returns realistic mock tire data with variety
  */
 
-const https = require('https');
-const zlib = require('zlib');
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient, GetCommand } = require("@aws-sdk/lib-dynamodb");
 
@@ -13,7 +11,6 @@ const client = new DynamoDBClient({});
 const dynamodb = DynamoDBDocumentClient.from(client);
 
 // Configuration
-const EBAY_APP_ID = process.env.EBAY_APP_ID;
 const DYNAMODB_TABLE = 'VehicleTireSizes';
 
 exports.handler = async (event) => {
@@ -27,7 +24,6 @@ exports.handler = async (event) => {
         const { year, make, model } = body;
         
         console.log('Parsed body:', { year, make, model });
-        console.log('eBay App ID:', EBAY_APP_ID ? 'SET' : 'NOT SET');
         
         // Validate required fields
         if (!year || !make || !model) {
@@ -47,8 +43,17 @@ exports.handler = async (event) => {
         
         console.log(`Step 1: Looking up tire size for: ${year} ${make} ${model}`);
         
-        // Step 1: Look up tire size in DynamoDB
-        const tireSize = await getTireSizeFromDB(year, make, model);
+        let tireSize;
+        
+        // Check if this is a direct tire size search
+        // Tire sizes have format: 195/35R14 or 195/35r14
+        if (model && model.match(/^\d{3}\/\d{2}[rR]\d{2}$/)) {
+            console.log('Direct tire size search detected:', model);
+            tireSize = model.toUpperCase(); // Normalize to uppercase
+        } else {
+            // Step 1: Look up tire size in DynamoDB
+            tireSize = await getTireSizeFromDB(year, make, model);
+        }
         
         if (!tireSize) {
             console.log('Vehicle not found in database');
@@ -67,12 +72,12 @@ exports.handler = async (event) => {
         }
         
         console.log(`Step 2: Found tire size: ${tireSize}`);
-        console.log(`Step 3: Searching eBay for tire size: ${tireSize}`);
+        console.log(`Step 3: Generating mock tire data for: ${tireSize}`);
         
-        // Step 2: Search eBay for tires by size
-        const tires = await searchEbayByTireSize(tireSize);
+        // Step 2: Generate mock tire data
+        const tires = generateMockTireData(tireSize);
         
-        console.log(`Successfully found ${tires.length} tires`);
+        console.log(`Successfully generated ${tires.length} tires`);
         
         // Return success response
         return {
@@ -113,9 +118,6 @@ exports.handler = async (event) => {
     }
 };
 
-/**
- * Look up tire size from DynamoDB (AWS SDK v3)
- */
 async function getTireSizeFromDB(year, make, model) {
     const vehicleKey = `${year}-${make}-${model}`;
     
@@ -147,168 +149,145 @@ async function getTireSizeFromDB(year, make, model) {
 }
 
 /**
- * Search eBay for tires by tire size (WITH GZIP SUPPORT)
+ * Generate realistic mock tire data with variety based on tire size
+ * Different sizes get different brand mixes and price ranges
  */
-async function searchEbayByTireSize(tireSize) {
-    return new Promise((resolve, reject) => {
-        // Search for the specific tire size
-        const searchQuery = `${tireSize} tire`;
-        const encodedQuery = encodeURIComponent(searchQuery);
-        
-        // eBay Finding API endpoint
-        const path = `/services/search/FindingService/v1?` +
-                    `OPERATION-NAME=findItemsByKeywords` +
-                    `&SERVICE-VERSION=1.0.0` +
-                    `&SECURITY-APPNAME=${EBAY_APP_ID}` +
-                    `&RESPONSE-DATA-FORMAT=JSON` +
-                    `&REST-PAYLOAD` +
-                    `&keywords=${encodedQuery}` +
-                    `&paginationInput.entriesPerPage=30` +
-                    `&categoryId=66471` +  // Tires category
-                    `&sortOrder=BestMatch`;
-        
-        console.log('========================================');
-        console.log('CALLING EBAY API');
-        console.log('Hostname: svcs.ebay.com');
-        console.log('Search query:', searchQuery);
-        console.log('========================================');
-        
-        const options = {
-            hostname: 'svcs.ebay.com',
-            path: path,
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Accept-Encoding': 'gzip, deflate'  // Tell eBay we accept gzip
-            }
-        };
-        
-        const req = https.request(options, (res) => {
-            console.log('eBay API Response Status Code:', res.statusCode);
-            console.log('Content-Encoding:', res.headers['content-encoding']);
-            
-            // Handle gzip-compressed responses
-            let stream = res;
-            const encoding = res.headers['content-encoding'];
-            
-            if (encoding === 'gzip') {
-                console.log('Response is GZIP compressed - decompressing...');
-                stream = res.pipe(zlib.createGunzip());
-            } else if (encoding === 'deflate') {
-                console.log('Response is DEFLATE compressed - decompressing...');
-                stream = res.pipe(zlib.createInflate());
-            } else {
-                console.log('Response is not compressed');
-            }
-            
-            let data = '';
-            
-            stream.on('data', (chunk) => {
-                data += chunk.toString();
-            });
-            
-            stream.on('end', () => {
-                try {
-                    console.log('Received data length:', data.length);
-                    console.log('First 200 chars:', data.substring(0, 200));
-                    
-                    const response = JSON.parse(data);
-                    
-                    // Check for errors
-                    if (response.errorMessage) {
-                        console.error('eBay API returned error:', response.errorMessage);
-                        reject(new Error(response.errorMessage[0].error[0].message[0]));
-                        return;
-                    }
-                    
-                    // Extract items from response
-                    const searchResult = response.findItemsByKeywordsResponse[0].searchResult[0];
-                    const itemCount = searchResult['@count'];
-                    const items = searchResult.item || [];
-                    
-                    console.log(`eBay returned ${itemCount} items`);
-                    
-                    if (items.length === 0) {
-                        console.log('No items found');
-                        resolve([]);
-                        return;
-                    }
-                    
-                    // Format the results
-                    const formattedTires = items.map(item => {
-                        return {
-                            id: item.itemId[0],
-                            name: item.title[0],
-                            brand: extractBrand(item.title[0]),
-                            price: parseFloat(item.sellingStatus[0].currentPrice[0].__value__),
-                            currency: item.sellingStatus[0].currentPrice[0]['@currencyId'],
-                            image: item.galleryURL ? item.galleryURL[0] : (item.pictureURLLarge ? item.pictureURLLarge[0] : ''),
-                            size: tireSize,
-                            url: item.viewItemURL[0],
-                            condition: item.condition ? item.condition[0].conditionDisplayName[0] : 'New',
-                            shipping: item.shippingInfo && item.shippingInfo[0].shippingServiceCost 
-                                ? parseFloat(item.shippingInfo[0].shippingServiceCost[0].__value__) 
-                                : 0,
-                            location: item.location ? item.location[0] : ''
-                        };
-                    });
-                    
-                    console.log(`Successfully formatted ${formattedTires.length} tires`);
-                    console.log('Sample tire:', JSON.stringify(formattedTires[0], null, 2));
-                    resolve(formattedTires);
-                    
-                } catch (err) {
-                    console.error('ERROR PARSING EBAY RESPONSE:', err);
-                    console.error('Raw data length:', data.length);
-                    console.error('Raw data sample:', data.substring(0, 500));
-                    reject(new Error('Failed to parse eBay response'));
-                }
-            });
-            
-            stream.on('error', (err) => {
-                console.error('STREAM ERROR:', err);
-                reject(err);
-            });
-        });
-        
-        req.on('error', (err) => {
-            console.error('HTTPS REQUEST ERROR:', err);
-            reject(err);
-        });
-        
-        req.end();
-    });
-}
-
-/**
- * Extract brand from title
- */
-function extractBrand(title) {
-    const brands = [
-        'Goodyear', 'Michelin', 'Bridgestone', 'Continental', 
-        'Pirelli', 'Dunlop', 'Firestone', 'Yokohama', 'Hankook',
-        'Cooper', 'BFGoodrich', 'BF Goodrich', 'Toyo', 'Falken', 
-        'Kumho', 'Nexen', 'General', 'Uniroyal', 'Nitto',
-        'Mickey Thompson', 'Dick Cepek', 'Mastercraft', 'Fuzion',
-        'Sumitomo', 'Federal', 'Maxxis', 'GT Radial', 'Kenda',
-        'Atturo', 'Lexani', 'Vercelli', 'Ironman', 'Hercules'
+function generateMockTireData(tireSize) {
+    // Create a deterministic seed based on tire size for consistency
+    const seed = tireSize.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    
+    // Seeded random number generator for consistent results per tire size
+    let seedValue = seed;
+    const seededRandom = () => {
+        seedValue = (seedValue * 9301 + 49297) % 233280;
+        return seedValue / 233280;
+    };
+    
+    // Different brand pools for variety
+    const premiumBrands = ['Michelin', 'Continental', 'Pirelli', 'Bridgestone'];
+    const standardBrands = ['Goodyear', 'Firestone', 'Dunlop', 'Yokohama', 'Hankook'];
+    const budgetBrands = ['Cooper', 'General', 'Uniroyal', 'Mastercraft', 'Federal'];
+    const performanceBrands = ['BFGoodrich', 'Toyo', 'Falken', 'Nitto', 'Nexen'];
+    const offRoadBrands = ['BFGoodrich', 'Goodyear', 'Mickey Thompson', 'Toyo', 'Nitto'];
+    
+    // Tire models categorized by type
+    const touringModels = ['Defender', 'Premier', 'Assurance', 'Turanza', 'CrossClimate', 'PureContact'];
+    const performanceModels = ['Pilot Sport', 'Eagle F1', 'P Zero', 'Potenza', 'ExtremeContact', 'Sport Maxx'];
+    const allSeasonModels = ['Assurance', 'Defender', 'LTX', 'CrossClimate', 'Tiger Paw', 'Ecopia'];
+    const truckModels = ['Wrangler', 'Dueler', 'LTX', 'Geolandar', 'Open Country', 'Trail Hog'];
+    
+    // Determine tire category based on size
+    const width = parseInt(tireSize.split('/')[0]);
+    const aspectRatio = parseInt(tireSize.split('/')[1]);
+    const rimSize = parseInt(tireSize.split('R')[1]);
+    
+    let brandPool, modelPool, priceMin, priceMax;
+    
+    // Categorize by size characteristics
+    if (width >= 275 && rimSize >= 18) {
+        // Large truck/SUV tires
+        brandPool = [...offRoadBrands, ...premiumBrands];
+        modelPool = truckModels;
+        priceMin = 150;
+        priceMax = 350;
+    } else if (aspectRatio <= 45 && rimSize >= 18) {
+        // Performance tires
+        brandPool = [...performanceBrands, ...premiumBrands];
+        modelPool = performanceModels;
+        priceMin = 120;
+        priceMax = 300;
+    } else if (width >= 245 && rimSize >= 17) {
+        // Mid-size SUV/Crossover
+        brandPool = [...standardBrands, ...premiumBrands];
+        modelPool = [...allSeasonModels, ...touringModels];
+        priceMin = 100;
+        priceMax = 250;
+    } else if (rimSize <= 16 && width <= 215) {
+        // Compact/economy car
+        brandPool = [...budgetBrands, ...standardBrands];
+        modelPool = [...touringModels, ...allSeasonModels];
+        priceMin = 60;
+        priceMax = 150;
+    } else {
+        // Standard passenger car
+        brandPool = [...standardBrands, ...premiumBrands, ...budgetBrands];
+        modelPool = [...touringModels, ...allSeasonModels];
+        priceMin = 80;
+        priceMax = 200;
+    }
+    
+    const conditions = ['New', 'New', 'New', 'New', 'Like New', 'Used'];
+    const locations = [
+        'Los Angeles, CA', 'New York, NY', 'Chicago, IL', 'Houston, TX',
+        'Phoenix, AZ', 'Philadelphia, PA', 'San Antonio, TX', 'Dallas, TX',
+        'San Diego, CA', 'San Jose, CA', 'Austin, TX', 'Jacksonville, FL',
+        'Fort Worth, TX', 'Columbus, OH', 'Charlotte, NC', 'Seattle, WA',
+        'Denver, CO', 'Boston, MA', 'Portland, OR', 'Las Vegas, NV'
     ];
     
-    const upperTitle = title.toUpperCase();
+    const tires = [];
     
-    for (const brand of brands) {
-        if (upperTitle.includes(brand.toUpperCase())) {
-            return brand;
+    for (let i = 0; i < 30; i++) {
+        const brand = brandPool[Math.floor(seededRandom() * brandPool.length)];
+        const model = modelPool[Math.floor(seededRandom() * modelPool.length)];
+        const condition = conditions[Math.floor(seededRandom() * conditions.length)];
+        const location = locations[Math.floor(seededRandom() * locations.length)];
+        
+        // Price varies based on category and condition
+        let basePrice = priceMin + seededRandom() * (priceMax - priceMin);
+        
+        // Adjust price for condition
+        if (condition === 'Used') {
+            basePrice *= 0.6;
+        } else if (condition === 'Like New') {
+            basePrice *= 0.85;
         }
+        
+        const price = Math.round(basePrice * 100) / 100;
+        
+        // Shipping varies by price
+        let shipping;
+        if (price < 100) {
+            shipping = [0, 0, 15][Math.floor(seededRandom() * 3)];
+        } else if (price < 200) {
+            shipping = [0, 15, 25][Math.floor(seededRandom() * 3)];
+        } else {
+            shipping = [0, 25, 35][Math.floor(seededRandom() * 3)];
+        }
+        
+        // Generate deterministic item ID based on tire size and index
+        const itemId = `${Math.floor((seed + i * 1000) % 900000000) + 100000000}`;
+        
+        // Country of manufacture based on brand
+        let madeIn;
+        if (['Michelin', 'Continental', 'Pirelli'].includes(brand)) {
+            madeIn = ['France', 'Germany', 'Italy'][Math.floor(seededRandom() * 3)];
+        } else if (['Bridgestone', 'Yokohama', 'Toyo'].includes(brand)) {
+            madeIn = 'Japan';
+        } else if (['Goodyear', 'Firestone', 'BFGoodrich', 'Cooper', 'General'].includes(brand)) {
+            madeIn = 'USA';
+        } else if (['Hankook', 'Nexen', 'Kumho'].includes(brand)) {
+            madeIn = 'South Korea';
+        } else {
+            madeIn = ['USA', 'Mexico', 'China', 'Thailand'][Math.floor(seededRandom() * 4)];
+        }
+        
+        tires.push({
+            id: itemId,
+            name: `${brand} ${model} ${tireSize} Tire`,
+            brand: brand,
+            model: model,  // Separate model field
+            madeIn: madeIn,  // Country of manufacture
+            price: price,
+            currency: 'USD',
+            image: `https://i.ebayimg.com/images/g/${itemId}/s-l300.jpg`,
+            size: tireSize,
+            url: `https://www.ebay.com/itm/${itemId}`,
+            condition: condition,
+            shipping: shipping,
+            location: location
+        });
     }
     
-    // If no brand found, try to extract first capitalized word
-    const words = title.split(' ');
-    for (const word of words) {
-        if (word.length > 2 && word[0] === word[0].toUpperCase()) {
-            return word;
-        }
-    }
-    
-    return 'Various';
+    return tires;
 }
